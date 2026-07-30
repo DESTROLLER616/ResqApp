@@ -1,0 +1,82 @@
+---
+alwaysApply: false
+description: Typescript conventions to apply in code.
+globs: src/**/*.ts,src/**/*.vue
+---
+
+# TypeScript conventions
+
+Keep code strict, explicit, and consistent with Vue 3 `<script setup lang="ts">` + Pinia.
+
+## Types
+
+1. Prefer `interface` for object shapes; use `type` for unions, intersections, and aliases.
+2. Do not use `any`. Prefer `unknown` and narrow, or a real type.
+3. Export shared domain types from `types/` or `features/<name>/types.ts` — do not redefine the same shape in multiple files.
+4. Prefer `readonly` / `as const` for fixed literals (methods, status codes).
+5. Avoid non-null assertions (`!`) unless the value is proven safe right above.
+
+```ts
+// ❌ BAD
+function parse(body: any) { ... }
+
+// ✅ GOOD
+function parse(body: unknown): HttpResponse {
+  // narrow / validate first
+}
+```
+
+## Naming
+
+| Kind | Convention | Example |
+|------|------------|---------|
+| Files | `kebab-case` | `request-url-bar.vue`, `http.ts` |
+| Components | `PascalCase` | `RequestUrlBar` |
+| Composables | `use` + camelCase | `useRequestSender` |
+| Stores | `use` + Domain + `Store` | `useRequestStore` |
+| Types / interfaces | `PascalCase` | `RequestDraft`, `HttpResponse` |
+| Constants | `UPPER_SNAKE` only for true constants | `DEFAULT_TIMEOUT_MS` |
+| Booleans | `is` / `has` / `can` / `should` | `isLoading`, `hasBody` |
+
+## Vue / Pinia
+
+1. Always `<script setup lang="ts">`.
+2. Props and emits typed (`defineProps<{...}>()`, `defineEmits<{...}>()`).
+3. Prefer `ref` / `computed` over Options API patterns.
+4. Store actions handle async + errors; components do not call Tauri/`invoke` directly (see structure rule).
+5. Do not add `as any` to silence Vue/Pinia typing issues — fix the type.
+
+## Functions & modules
+
+1. Prefer named exports; default export only for Vue SFCs.
+2. Keep functions small and single-purpose; pure helpers go in `utils/`.
+3. Prefer `async/await` over raw `.then()` chains.
+4. Handle errors explicitly — no empty `catch`.
+
+```ts
+// ❌ BAD
+try {
+  await sendRequest(draft)
+} catch {}
+
+// ✅ GOOD
+try {
+  await sendRequest(draft)
+} catch (e) {
+  const message = e instanceof Error ? e.message : 'Request failed'
+  throw new Error(message, { cause: e })
+}
+```
+
+## Imports
+
+1. Use `@/` aliases when configured; avoid deep `../../../`.
+2. Group: external → `@/` / internal → relative; keep unused imports out (`noUnusedLocals`).
+3. Import only the Naive components you use (see ui-components rule).
+
+## Do not
+
+- Disable TypeScript with `@ts-ignore` / `@ts-nocheck` unless unavoidable and commented why.
+- Commit `console.log` debug noise; use intentional logging if needed later.
+- Over-abstract on first use (no premature generics/factories).
+```

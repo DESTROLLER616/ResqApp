@@ -1,0 +1,28 @@
+---
+alwaysApply: false
+description: Prefer Naive UI components over custom UI
+globs: src/**/*.vue,src/**/*.ts
+---
+
+# Prefer Naive UI
+When building UI in Vue, use [Naive UI](https://www.naiveui.com/) components first. Do not create custom buttons, inputs, dialogs, tables, menus, or layout primitives if Naive already provides them.
+
+## Rules
+1. Prefer `naive-ui` for interactive and layout UI: `NButton`, `NInput`, `NSelect`, `NForm`, `NModal`, `NDrawer`, `NTabs`, `NDataTable`, `NSpace`, `NLayout`, `NMenu`, `NTag`, `NTooltip`, etc.
+2. Import only what you use (tree-shake friendly), e.g. `import { NButton, NSpace } from 'naive-ui'`.
+3. Use Naive props/slots/themes for styling and variants before writing custom CSS.
+4. Custom components are OK only when wrapping Naive for app-specific reuse (e.g. `components/ui/AppConfirmModal.vue` around `NModal`) or when Naive has no equivalent.
+5. Icons: prefer `@vicons/*` with Naive's `NIcon` when needed.
+
+## Examples
+```vue
+<!-- ❌ BAD: custom button -->
+<button class="btn-primary" @click="send">Send</button>
+
+<!-- ✅ GOOD -->
+<script setup lang="ts">
+import { NButton } from 'naive-ui'
+</script>
+<template>
+  <n-button type="primary" @click="send">Send</n-button>
+</template>

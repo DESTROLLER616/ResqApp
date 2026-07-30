@@ -1,0 +1,56 @@
+---
+description: Frontend layout — layers + features under src/
+globs: src/**
+alwaysApply: false
+---
+
+# Frontend structure (layers + features)
+
+Organize Vue code under `src/` by **layer** (shared) and **feature** (domain). Do not dump domain logic into `App.vue` or flat folders.
+
+## Layout
+
+```
+src/
+├── main.ts, App.vue          # bootstrap + root shell only
+├── assets/, styles/          # static assets, global CSS
+├── components/               # reusable UI (no domain logic)
+│   ├── ui/                   # Naive UI wrappers if needed
+│   └── layout/               # AppShell, Sidebar, Toolbar
+├── features/<name>/          # domain slices (request, response, …)
+│   ├── components/
+│   ├── composables/
+│   └── types.ts              # feature-local types only
+├── stores/                   # Pinia — one store per domain
+├── composables/              # shared hooks (cross-feature)
+├── services/                 # Tauri invoke / I/O only
+├── types/                    # shared contracts
+└── utils/                    # pure helpers (no Vue, no Tauri)
+```
+
+## Rules
+
+1. **`App.vue`** composes layout only — no HTTP / Tauri / business logic.
+2. **Domain UI** lives in `features/<name>/`, not in root `components/`.
+3. **`components/`** = generic, reusable. If removing the feature would make the component meaningless, it belongs in that feature.
+4. **Tauri / `invoke`** only in `services/`. Components and stores call services, never `@tauri-apps/api` directly.
+5. **Features do not import each other deeply.** Shared code goes to `components/`, `composables/`, `stores/`, `types/`, or `utils/`.
+6. **One Pinia store per domain** (`stores/request.ts`, not a mega-store).
+7. Prefer `@/` imports (e.g. `@/services/http`). Do not create empty folders “for later”.
+
+## Example — send a request
+
+```
+✅ GOOD
+features/request/components/RequestUrlBar.vue  → calls store action
+stores/request.ts                              → calls service
+services/http.ts                               → invoke('send_request', …)
+types/http.ts                                  → RequestDraft, HttpResponse
+
+❌ BAD
+App.vue                    → invoke(...) + parse body + update UI
+components/RequestUrlBar.vue → import { invoke } from '@tauri-apps/api/core'
+features/response/…        → import from features/request/… (cross-feature)
+```
+
+When adding UI for a new domain area (history, collections, environments), create `features/<name>/` and a matching store if state is shared — do not append it to an unrelated feature or to `App.vue`.

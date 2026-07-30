@@ -1,0 +1,85 @@
+---
+description: Rust conventions for src-tauri backend code
+globs: src-tauri/src/**/*.rs
+alwaysApply: false
+---
+
+# Rust conventions
+
+Keep code explicit, idiomatic, and consistent with the backend structure rule (`commands/` / `domain/` / `services/`).
+
+## Types & data
+
+1. Prefer `struct` + `enum` over stringly-typed APIs.
+2. Derive `Serialize` / `Deserialize` on types that cross the Tauri IPC or disk JSON boundary. Keep field names in sync with `src/types/` on the frontend (prefer `camelCase` via `#[serde(rename_all = "camelCase")]` when matching TS).
+3. Do not use `unwrap()` / `expect()` in library paths (commands, services, domain) except in tests or truly unreachable cases with a clear message.
+4. Prefer `&str` / `&Path` in function params; own `String` / `PathBuf` only when you need ownership.
+5. Avoid `clone()` unless needed; do not silence borrow issues with blanket clones.
+
+```rust
+// ❌ BAD
+fn save(path: String, data: String) { ... }
+
+// ✅ GOOD
+fn save(path: &Path, data: &str) -> Result<(), AppError> { ... }
+```
+
+## Naming
+
+| Kind | Convention | Example |
+|------|------------|---------|
+| Files / modules | `snake_case` | `workspace_store.rs`, `fs_scan.rs` |
+| Types / traits / enums | `PascalCase` | `WorkspaceConfig`, `AppError` |
+| Functions / methods / vars | `snake_case` | `load_workspace`, `app_data_dir` |
+| Constants | `UPPER_SNAKE` | `DEFAULT_TIMEOUT_MS` |
+| Booleans | `is_` / `has_` / `can_` / `should_` | `is_file`, `has_body` |
+| Tauri commands | `snake_case`, verb-first | `load_workspace`, `add_directory` |
+
+## Errors
+
+1. Centralize errors in `error.rs` with `thiserror` (or an equivalent enum). Use `type Result<T> = std::result::Result<T, AppError>`.
+2. Propagate with `?`. Map foreign errors (`io::Error`, `serde_json::Error`) via `#[from]` or explicit context — do not discard them.
+3. At the command edge, return `Result<T, String>` **or** a serializable error type; map `AppError` once there. Do not scatter `.map_err(|e| e.to_string())` deep in services if `AppError` already covers it.
+4. Never use empty `catch`-equivalents or ignore `Result` with `let _ = ...` unless the failure is intentionally best-effort and commented.
+
+```rust
+// ❌ BAD
+let _ = fs::write(path, data);
+
+// ✅ GOOD
+fs::write(path, data).map_err(AppError::Io)?;
+```
+
+## Commands (Tauri)
+
+1. Keep `#[tauri::command]` handlers thin: parse/validate → call service → return.
+2. Do not put `fs::` / HTTP client calls directly in commands when a service exists (or should exist).
+3. Validate paths from the frontend (absolute, exists, is dir/file as expected; canonicalize). Reject path traversal.
+4. Register every public command in `lib.rs` `generate_handler![]`.
+
+## Async & blocking
+
+1. Prefer `async` commands when awaiting network or `tokio::fs`.
+2. Do not block the async runtime with heavy sync I/O; use `tokio::fs` or `tauri::async_runtime::spawn_blocking` for large/sync work.
+3. Prefer `async/await` over manual future combinators unless clearer otherwise.
+
+## Modules & visibility
+
+1. Use `mod` trees from `mod.rs`; prefer `pub(crate)` for internal APIs, `pub` only for types/commands that must be public.
+2. Domain code must not import `tauri` or do I/O.
+3. Keep functions small and single-purpose; pure logic in `domain/`, I/O in `services/`.
+4. No premature generics/traits — introduce them when a second real use appears.
+
+## Imports
+
+1. Group: `std` → external crates → `crate::`.
+2. Prefer `use crate::domain::workspace::WorkspaceConfig` over long in-place paths at call sites.
+3. Do not leave unused imports (`unused_imports` must stay clean).
+
+## Do not
+
+- Leave business logic in `lib.rs` / `main.rs`.
+- Use `unwrap()` on user-controlled or I/O results.
+- Accept arbitrary filesystem paths from the frontend without validation.
+- Commit `println!` / `dbg!` noise; use intentional logging if added later.
+- Over-abstract on first use (no mega trait hierarchies for one call site).

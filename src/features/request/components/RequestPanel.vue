@@ -13,7 +13,7 @@ import type { SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useResizableSize } from '@/composables/use-resizable-size'
-import { useCollectionsStore } from '@/stores/collections'
+import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { HTTP_METHODS, type HttpMethod } from '@/types/http'
 import RequestBodyEditor from './request-body-editor.vue'
@@ -24,25 +24,16 @@ const RESPONSE_MIN = 120
 const REQUEST_MIN = 180
 const RESPONSE_INITIAL = 220
 
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
-const { activeCollectionId, activeRequestId } = storeToRefs(workspaceStore)
+const { activeDraft, hasProject } = storeToRefs(projectStore)
+const { activeRequestPath } = storeToRefs(workspaceStore)
 
 const panelRef = useTemplateRef<HTMLElement>('panel')
 const { size: responseHeight, resizeBy, setMax } = useResizableSize({
   initial: RESPONSE_INITIAL,
   min: RESPONSE_MIN,
   max: 600,
-})
-
-const activeRequest = computed(() => {
-  if (!activeCollectionId.value || !activeRequestId.value) return null
-  return (
-    collectionsStore.findRequest(
-      activeCollectionId.value,
-      activeRequestId.value,
-    ) ?? null
-  )
 })
 
 const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
@@ -62,18 +53,11 @@ function onResponseDrag(delta: number): void {
 }
 
 function updateMethod(value: string): void {
-  if (!activeCollectionId.value || !activeRequestId.value) return
-  collectionsStore.updateRequest(activeCollectionId.value, activeRequestId.value, {
-    method: value as HttpMethod,
-  })
+  projectStore.updateActiveRequest({ method: value as HttpMethod })
 }
 
 function updateUrl(value: string): void {
-  if (!activeCollectionId.value || !activeRequestId.value) return
-
-  collectionsStore.updateRequest(activeCollectionId.value, activeRequestId.value, {
-    url: value,
-  })
+  projectStore.updateActiveRequest({ url: value })
 }
 
 onMounted(() => {
@@ -83,43 +67,47 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateResponseMax)
+  void projectStore.flushSave()
 })
 
-watch(activeRequest, () => {
+watch(activeDraft, () => {
   requestAnimationFrame(updateResponseMax)
 })
 
 const displayCompleteUrl = computed(() => {
-  if (!activeRequest.value) return ''
+  if (!activeDraft.value) return ''
 
-  const url = new URL(activeRequest.value.url)
-
-  activeRequest.value.params.map((i) => {
-    if (i.enabled && i.key) {
-      url.searchParams.set(i.key, i.value)
+  try {
+    const url = new URL(activeDraft.value.url)
+    for (const param of activeDraft.value.params) {
+      if (param.enabled && param.key) {
+        url.searchParams.set(param.key, param.value)
+      }
     }
-  })
-
-  return url.toString()
+    return url.toString()
+  } catch {
+    return activeDraft.value.url
+  }
 })
 </script>
 
 <template>
   <div ref="panel" class="request-panel">
-    <template v-if="activeRequest && activeCollectionId">
+    <template v-if="activeDraft && activeRequestPath">
       <div class="request-panel__request">
         <div class="request-panel__bar">
           <div class="request-panel__bar-row">
             <n-select
               class="request-panel__method"
-              :value="activeRequest.method"
+              :value="activeDraft.method"
               :options="methodOptions"
               :consistent-menu-width="false"
               @update:value="updateMethod"
             />
             <n-input
               class="request-panel__url"
-              :value="displayCompleteUrl"
+              :value="activeDraft.url"
+              :title="displayCompleteUrl || undefined"
               placeholder="https://api.example.com/…"
               @update:value="updateUrl"
             />
@@ -128,31 +116,20 @@ const displayCompleteUrl = computed(() => {
         </div>
 
         <div class="request-panel__name">
-          <n-text strong>{{ activeRequest.name }}</n-text>
+          <n-text strong>{{ activeDraft.name }}</n-text>
+          <n-text depth="3" class="request-panel__path">{{ activeRequestPath }}</n-text>
         </div>
 
         <div class="request-panel__editor">
           <n-tabs type="line" size="small" default-value="body" class="request-panel__tabs">
             <n-tab-pane name="params" tab="Params" display-directive="show:lazy">
-              <RequestParamsEditor
-                :collection-id="activeCollectionId"
-                :request-id="activeRequest.id"
-                :params="activeRequest.params ?? []"
-              />
+              <RequestParamsEditor :params="activeDraft.params ?? []" />
             </n-tab-pane>
             <n-tab-pane name="headers" tab="Headers" display-directive="show:lazy">
-              <RequestHeadersEditor
-                :collection-id="activeCollectionId"
-                :request-id="activeRequest.id"
-                :headers="activeRequest.headers ?? []"
-              />
+              <RequestHeadersEditor :headers="activeDraft.headers ?? []" />
             </n-tab-pane>
             <n-tab-pane name="body" tab="Body" display-directive="show:lazy" class="request-panel__body-pane">
-              <RequestBodyEditor
-                :collection-id="activeCollectionId"
-                :request-id="activeRequest.id"
-                :body="activeRequest.body"
-              />
+              <RequestBodyEditor :body="activeDraft.body" />
             </n-tab-pane>
           </n-tabs>
         </div>
@@ -172,9 +149,9 @@ const displayCompleteUrl = computed(() => {
     <div v-else class="request-panel__placeholder">
       <n-empty
         :description="
-          activeCollectionId
-            ? 'Selecciona una petición de la colección'
-            : 'Abre una colección para empezar'
+          hasProject
+            ? 'Selecciona una petición del proyecto'
+            : 'Abre o crea un proyecto para empezar'
         "
       />
     </div>
@@ -227,7 +204,18 @@ const displayCompleteUrl = computed(() => {
 
 .request-panel__name {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 10px 16px 0;
+}
+
+.request-panel__path {
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .request-panel__editor {

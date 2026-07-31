@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, useTemplateRef } from 'vue'
-import CollectionsSidebar from '@/features/collections/components/CollectionsSidebar.vue'
-import CollectionTabs from '@/features/collections/components/CollectionTabs.vue'
+import { NMessageProvider } from 'naive-ui'
+import ProjectSidebar from '@/features/project/components/ProjectSidebar.vue'
+import RecentProjectsSidebar from '@/features/project/components/RecentProjectsSidebar.vue'
+import RequestTabs from '@/features/project/components/RequestTabs.vue'
 import RequestPanel from '@/features/request/components/RequestPanel.vue'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useResizableSize } from '@/composables/use-resizable-size'
@@ -9,6 +11,7 @@ import { useResizableSize } from '@/composables/use-resizable-size'
 const SIDEBAR_MIN = 180
 const SIDEBAR_MAX_DEFAULT = 520
 const MAIN_MIN = 360
+const RECENT_WIDTH = 220
 
 const shellRef = useTemplateRef<HTMLElement>('shell')
 const { size: siderWidth, resizeBy, setMax } = useResizableSize({
@@ -19,7 +22,7 @@ const { size: siderWidth, resizeBy, setMax } = useResizableSize({
 
 function updateSidebarMax(): void {
   const shellWidth = shellRef.value?.clientWidth ?? window.innerWidth
-  setMax(Math.max(SIDEBAR_MIN, shellWidth - MAIN_MIN))
+  setMax(Math.max(SIDEBAR_MIN, shellWidth - MAIN_MIN - RECENT_WIDTH))
 }
 
 function onSiderDrag(delta: number): void {
@@ -38,23 +41,29 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="shell" class="app-shell">
-    <aside
-      class="app-shell__sider"
-      :style="{ width: `${siderWidth}px`, flexBasis: `${siderWidth}px` }"
-    >
-      <CollectionsSidebar />
-    </aside>
+  <n-message-provider>
+    <div ref="shell" class="app-shell">
+      <aside
+        class="app-shell__sider"
+        :style="{ width: `${siderWidth}px`, flexBasis: `${siderWidth}px` }"
+      >
+        <ProjectSidebar />
+      </aside>
 
-    <ResizeHandle orientation="vertical" @drag="onSiderDrag" />
+      <ResizeHandle orientation="vertical" @drag="onSiderDrag" />
 
-    <main class="app-shell__main">
-      <CollectionTabs />
-      <div class="app-shell__panel">
-        <RequestPanel />
-      </div>
-    </main>
-  </div>
+      <main class="app-shell__main">
+        <RequestTabs />
+        <div class="app-shell__panel">
+          <RequestPanel />
+        </div>
+      </main>
+
+      <aside class="app-shell__recent" :style="{ width: `${RECENT_WIDTH}px` }">
+        <RecentProjectsSidebar />
+      </aside>
+    </div>
+  </n-message-provider>
 </template>
 
 <style scoped>
@@ -86,6 +95,13 @@ onUnmounted(() => {
 .app-shell__panel {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell__recent {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 </style>

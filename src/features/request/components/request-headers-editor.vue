@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
-import { useCollectionsStore } from '@/stores/collections'
+import { useProjectStore } from '@/stores/project'
 import type { HttpHeader } from '@/types/http'
 
 const props = defineProps<{
-  collectionId: string
-  requestId: string
   headers: HttpHeader[]
 }>()
 
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
 
 function updateHeader(
   headerId: string,
@@ -18,7 +16,7 @@ function updateHeader(
   const headers = props.headers.map((header) =>
     header.id === headerId ? { ...header, ...patch } : header,
   )
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { headers })
+  projectStore.updateActiveRequest({ headers })
 }
 
 function addHeader(): void {
@@ -31,13 +29,13 @@ function addHeader(): void {
       enabled: true,
     },
   ]
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { headers })
+  projectStore.updateActiveRequest({ headers })
 }
 </script>
 
 <template>
   <div class="headers-editor">
-    <n-table :key="requestId" striped size="small" class="headers-editor__table">
+    <n-table striped size="small" class="headers-editor__table">
       <thead>
         <tr>
           <th style="width: 40%">Name</th>

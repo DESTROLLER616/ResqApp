@@ -1,19 +1,15 @@
 <script setup lang="ts">
 import { NInput } from 'naive-ui'
-import { useCollectionsStore } from '@/stores/collections'
+import { useProjectStore } from '@/stores/project'
 
-const props = defineProps<{
-  collectionId: string
-  requestId: string
+defineProps<{
   body: string
 }>()
 
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
 
 function updateBody(value: string): void {
-  collectionsStore.updateRequest(props.collectionId, props.requestId, {
-    body: value,
-  })
+  projectStore.updateActiveRequest({ body: value })
 }
 </script>
 

@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
-import { useCollectionsStore } from '@/stores/collections'
+import { useProjectStore } from '@/stores/project'
 import type { HttpParam } from '@/types/http'
 
 const props = defineProps<{
-  collectionId: string
-  requestId: string
   params: HttpParam[]
 }>()
 
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
 
 function updateParam(
   paramId: string,
@@ -18,7 +16,7 @@ function updateParam(
   const params = props.params.map((param) =>
     param.id === paramId ? { ...param, ...patch } : param,
   )
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { params })
+  projectStore.updateActiveRequest({ params })
 }
 
 function addParam(): void {
@@ -31,13 +29,13 @@ function addParam(): void {
       enabled: true,
     },
   ]
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { params })
+  projectStore.updateActiveRequest({ params })
 }
 </script>
 
 <template>
   <div class="params-editor">
-    <n-table :key="requestId" striped size="small" class="params-editor__table">
+    <n-table striped size="small" class="params-editor__table">
       <thead>
         <tr>
           <th style="width: 40%">Name</th>

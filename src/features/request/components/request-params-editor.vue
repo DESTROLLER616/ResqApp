@@ -2,6 +2,7 @@
 import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import type { HttpParam } from '@/types/http'
+import { Trash, TrashAlt } from '@vicons/fa';
 
 const props = defineProps<{
   params: HttpParam[]
@@ -31,6 +32,14 @@ function addParam(): void {
   ]
   projectStore.updateActiveRequest({ params })
 }
+
+function deleteParams(id: string): void {
+  const index = props.params.findIndex((header) => header.id === id)
+
+  if (index > -1){
+    props.params.splice(index, 1)
+  }
+}
 </script>
 
 <template>
@@ -39,9 +48,10 @@ function addParam(): void {
       <n-table striped size="small" class="params-editor__table">
         <thead>
           <tr>
-            <th style="width: 40%">Name</th>
-            <th style="width: 45%">Value</th>
-            <th style="width: 15%; text-align: center">Active</th>
+            <th style="width: 25%">Name</th>
+            <th style="width: 25%">Value</th>
+            <th style="width: 25%; text-align: center">Active</th>
+            <th style="width: 25;">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -67,6 +77,11 @@ function addParam(): void {
                 :checked="param.enabled"
                 @update:checked="(enabled) => updateParam(param.id, { enabled })"
               />
+            </td>
+            <td>
+              <n-button type="error" @click="deleteParams(param.id)"> 
+                Borrar
+              </n-button>
             </td>
           </tr>
         </tbody>

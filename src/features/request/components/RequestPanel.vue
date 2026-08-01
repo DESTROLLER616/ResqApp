@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import {
   NButton,
   NEmpty,
@@ -24,7 +24,9 @@ import {
 import RequestBodyEditor from './request-body-editor.vue'
 import RequestHeadersEditor from './request-headers-editor.vue'
 import RequestParamsEditor from './request-params-editor.vue'
+import ResponseBodyTab from './response-body-tab.vue'
 import makeRequest from '../make-request.ts'
+import ResponseHeadersTab from './response-headers-tab.vue'
 
 const RESPONSE_MIN = 120
 const REQUEST_MIN = 180
@@ -44,6 +46,14 @@ const { size: responseHeight, resizeBy, setMax } = useResizableSize({
 const response = ref<HttpResponse | null>(null)
 const responseError = ref<string | null>(null)
 const isSending = ref(false)
+const requestTab = ref<'params' | 'headers' | 'body'>('body')
+
+const METHODS_WITHOUT_BODY: ReadonlySet<HttpMethod> = new Set(['GET', 'HEAD'])
+
+const isBodyDisabled = computed(() => {
+  const method = activeDraft.value?.method
+  return method != null && METHODS_WITHOUT_BODY.has(method)
+})
 
 /** Local input value so URL normalization does not fight caret while typing. */
 const urlDraft = ref('')
@@ -152,6 +162,12 @@ function updateUrl(raw: string): void {
   }
 }
 
+watch(isBodyDisabled, (disabled) => {
+  if (disabled && requestTab.value === 'body') {
+    requestTab.value = 'params'
+  }
+})
+
 onMounted(() => {
   updateResponseMax()
   window.addEventListener('resize', updateResponseMax)
@@ -223,14 +239,25 @@ watch(
         </div>
 
         <div class="request-panel__editor">
-          <n-tabs type="line" size="small" default-value="body" class="request-panel__tabs">
+          <n-tabs
+            v-model:value="requestTab"
+            type="line"
+            size="small"
+            class="request-panel__tabs"
+          >
             <n-tab-pane name="params" tab="Params" display-directive="show:lazy">
               <RequestParamsEditor :params="activeDraft.params ?? []" />
             </n-tab-pane>
             <n-tab-pane name="headers" tab="Headers" display-directive="show:lazy">
               <RequestHeadersEditor :headers="activeDraft.headers ?? []" />
             </n-tab-pane>
-            <n-tab-pane name="body" tab="Body" display-directive="show:lazy" class="request-panel__body-pane">
+            <n-tab-pane
+              name="body"
+              tab="Body"
+              :disabled="isBodyDisabled"
+              display-directive="show:lazy"
+              class="request-panel__body-pane"
+            >
               <RequestBodyEditor :body="activeDraft.body" />
             </n-tab-pane>
           </n-tabs>
@@ -255,12 +282,12 @@ watch(
             <n-text strong>{{ response.status }} {{ response.statusText }}</n-text>
             <n-text depth="3">{{ response.elapsedMs }} ms</n-text>
           </div>
-          <n-tabs default-value="body">
+          <n-tabs default-value="body" class="request-panel__response-tabs">
             <n-tab-pane name="body" tab="Body">
-              <n-empty description="Envía una petición para ver la respuesta" size="small" />
+              <ResponseBodyTab :response-body="response.body"></ResponseBodyTab>
             </n-tab-pane>
-            <n-tab-pane name="headers" tab="Header">
-              <n-empty description="Envía una petición para ver la respuesta" size="small" />
+            <n-tab-pane name="headers" tab="Headers">
+              <ResponseHeadersTab :response-headers="response.headers"></ResponseHeadersTab>
             </n-tab-pane>
           </n-tabs>
         </div>
@@ -393,6 +420,21 @@ watch(
   flex-direction: column;
   gap: 8px;
   min-height: 0;
+  height: 100%;
+}
+
+.request-panel__response-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.request-panel__response-tabs :deep(.n-tabs-pane-wrapper),
+.request-panel__response-tabs :deep(.n-tab-pane) {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 .request-panel__meta {

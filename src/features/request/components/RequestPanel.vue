@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import {
   NButton,
   NEmpty,
@@ -15,7 +15,7 @@ import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useResizableSize } from '@/composables/use-resizable-size'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { HTTP_METHODS, type HttpMethod } from '@/types/http'
+import { HTTP_METHODS, type HttpMethod, type HttpParam } from '@/types/http'
 import RequestBodyEditor from './request-body-editor.vue'
 import RequestHeadersEditor from './request-headers-editor.vue'
 import RequestParamsEditor from './request-params-editor.vue'
@@ -36,10 +36,38 @@ const { size: responseHeight, resizeBy, setMax } = useResizableSize({
   max: 600,
 })
 
+/** Local input value so URL normalization does not fight caret while typing. */
+const urlDraft = ref('')
+let skipParamsUrlSync = false
+
 const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
   label: String(method).charAt(0).toUpperCase() + String(method).slice(1),
   value: method,
 }))
+
+function buildCompleteUrl(base: string, params: HttpParam[]): string {
+  try {
+    const url = new URL(base)
+    url.search = ''
+    for (const param of params) {
+      if (param.enabled && param.key) {
+        url.searchParams.append(param.key, param.value)
+      }
+    }
+    return url.toString()
+  } catch {
+    return base
+  }
+}
+
+function syncUrlDraftFromStore(): void {
+  const draft = activeDraft.value
+  if (!draft) {
+    urlDraft.value = ''
+    return
+  }
+  urlDraft.value = buildCompleteUrl(draft.url, draft.params ?? [])
+}
 
 function updateResponseMax(): void {
   const panelHeight = panelRef.value?.clientHeight ?? 0
@@ -56,8 +84,47 @@ function updateMethod(value: string): void {
   projectStore.updateActiveRequest({ method: value as HttpMethod })
 }
 
-function updateUrl(value: string): void {
-  projectStore.updateActiveRequest({ url: value })
+function updateUrl(raw: string): void {
+  urlDraft.value = raw
+
+  try {
+    const parsed = new URL(raw)
+    const existingEnabled = activeDraft.value?.params.filter((p) => p.enabled) ?? []
+    const usedIds = new Set<string>()
+
+    const fromUrl: HttpParam[] = [...parsed.searchParams.entries()].map(
+      ([key, value]) => {
+        const existing = existingEnabled.find(
+          (param) => param.key === key && !usedIds.has(param.id),
+        )
+        if (existing) {
+          usedIds.add(existing.id)
+          return { ...existing, key, value, enabled: true }
+        }
+        return {
+          id: crypto.randomUUID(),
+          key,
+          value,
+          enabled: true,
+        }
+      },
+    )
+
+    const emptyEnabled =
+      activeDraft.value?.params.filter((param) => param.enabled && !param.key) ?? []
+    const disabled =
+      activeDraft.value?.params.filter((param) => !param.enabled) ?? []
+
+    parsed.search = ''
+    skipParamsUrlSync = true
+    projectStore.updateActiveRequest({
+      url: parsed.toString(),
+      params: [...fromUrl, ...emptyEnabled, ...disabled],
+    })
+  } catch {
+    // Incomplete URL while typing — keep draft as typed; do not touch params.
+    projectStore.updateActiveRequest({ url: raw })
+  }
 }
 
 onMounted(() => {
@@ -74,21 +141,25 @@ watch(activeDraft, () => {
   requestAnimationFrame(updateResponseMax)
 })
 
-const displayCompleteUrl = computed(() => {
-  if (!activeDraft.value) return ''
+watch(
+  activeRequestPath,
+  () => {
+    syncUrlDraftFromStore()
+  },
+  { immediate: true },
+)
 
-  try {
-    const url = new URL(activeDraft.value.url)
-    for (const param of activeDraft.value.params) {
-      if (param.enabled && param.key) {
-        url.searchParams.set(param.key, param.value)
-      }
+watch(
+  () => activeDraft.value?.params,
+  () => {
+    if (skipParamsUrlSync) {
+      skipParamsUrlSync = false
+      return
     }
-    return url.toString()
-  } catch {
-    return activeDraft.value.url
-  }
-})
+    syncUrlDraftFromStore()
+  },
+  { deep: true },
+)
 </script>
 
 <template>
@@ -106,8 +177,7 @@ const displayCompleteUrl = computed(() => {
             />
             <n-input
               class="request-panel__url"
-              :value="activeDraft.url"
-              :title="displayCompleteUrl || undefined"
+              :value="urlDraft"
               placeholder="https://api.example.com/…"
               @update:value="updateUrl"
             />

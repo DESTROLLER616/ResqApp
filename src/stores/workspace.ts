@@ -46,9 +46,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   function closeMatching(pathPrefix: string): void {
     openTabs.value = openTabs.value.filter(
-      (tab) =>
-        tab.relativePath !== pathPrefix &&
-        !tab.relativePath.startsWith(`${pathPrefix}/`),
+      (tab) => tab.relativePath !== pathPrefix && !tab.relativePath.startsWith(`${pathPrefix}/`),
     )
     if (
       activeRequestPath.value &&

@@ -14,7 +14,11 @@ const MAIN_MIN = 360
 const RECENT_WIDTH = 220
 
 const shellRef = useTemplateRef<HTMLElement>('shell')
-const { size: siderWidth, resizeBy, setMax } = useResizableSize({
+const {
+  size: siderWidth,
+  resizeBy,
+  setMax,
+} = useResizableSize({
   initial: 280,
   min: SIDEBAR_MIN,
   max: SIDEBAR_MAX_DEFAULT,

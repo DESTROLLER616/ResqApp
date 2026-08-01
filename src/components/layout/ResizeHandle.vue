@@ -13,20 +13,14 @@ function onPointerDown(event: PointerEvent): void {
   const handle = event.currentTarget as HTMLElement
   handle.setPointerCapture(event.pointerId)
 
-  let last =
-    props.orientation === 'vertical' ? event.clientX : event.clientY
+  let last = props.orientation === 'vertical' ? event.clientX : event.clientY
 
   document.body.classList.add(
-    props.orientation === 'vertical'
-      ? 'is-resizing-col'
-      : 'is-resizing-row',
+    props.orientation === 'vertical' ? 'is-resizing-col' : 'is-resizing-row',
   )
 
   function onPointerMove(moveEvent: PointerEvent): void {
-    const current =
-      props.orientation === 'vertical'
-        ? moveEvent.clientX
-        : moveEvent.clientY
+    const current = props.orientation === 'vertical' ? moveEvent.clientX : moveEvent.clientY
     const delta = current - last
     last = current
     if (delta !== 0) emit('drag', delta)

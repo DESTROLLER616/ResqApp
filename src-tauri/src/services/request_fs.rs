@@ -202,6 +202,78 @@ pub fn write_request(
     Ok(())
 }
 
+pub fn rename_entry(
+    project_root: &Path,
+    relative_path: &str,
+    new_name: &str,
+) -> Result<OpenedProject> {
+    let root = canonicalize_existing(project_root)?;
+    let _ = read_project_meta(&root)?;
+
+    let from = relative_path.trim_matches(['/', '\\']);
+    if from.is_empty() {
+        return Err(AppError::message("cannot rename project root"));
+    }
+    if from == PROJECT_MARKER_FILE {
+        return Err(AppError::message("cannot rename project marker file"));
+    }
+
+    let from_path = resolve_relative(&root, from)?;
+    if !from_path.exists() {
+        return Err(AppError::message(format!("entry not found: {from}")));
+    }
+
+    let new_name = sanitize_entry_name(new_name)?;
+    let file_name = if from_path.is_file() {
+        let stem = new_name
+            .strip_suffix(".json")
+            .or_else(|| new_name.strip_suffix(".JSON"))
+            .unwrap_or(&new_name);
+        format!("{stem}.json")
+    } else {
+        new_name
+    };
+
+    let parent_relative = match from.rfind(['/', '\\']) {
+        Some(index) => from[..index].to_string(),
+        None => String::new(),
+    };
+    let dest_relative = join_relative(&parent_relative, &file_name);
+    if dest_relative == from {
+        return open_project(&root);
+    }
+
+    let dest_path = resolve_relative(&root, &dest_relative)?;
+    if dest_path.exists() {
+        return Err(AppError::message(format!(
+            "destination already exists: {dest_relative}"
+        )));
+    }
+
+    fs::rename(&from_path, &dest_path)?;
+
+    // Keep RequestDraft.name in sync for request files.
+    if dest_path.is_file()
+        && dest_path
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
+    {
+        let stem = dest_path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_default();
+        if let Ok(raw) = fs::read_to_string(&dest_path) {
+            if let Ok(mut draft) = serde_json::from_str::<RequestDraft>(&raw) {
+                draft.name = stem;
+                let raw = serde_json::to_string_pretty(&draft)?;
+                fs::write(&dest_path, raw)?;
+            }
+        }
+    }
+
+    open_project(&root)
+}
+
 pub fn delete_entry(project_root: &Path, relative_path: &str) -> Result<OpenedProject> {
     let root = canonicalize_existing(project_root)?;
     let _ = read_project_meta(&root)?;

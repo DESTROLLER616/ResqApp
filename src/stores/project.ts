@@ -125,14 +125,23 @@ export const useProjectStore = defineStore('project', () => {
     applyOpened(project)
   }
 
-  async function createRequest(parentRelative: string, requestName: string): Promise<string> {
+  async function createRequest(parentRelative: string, requestName: string, httpMethod: HttpMethod): Promise<string> {
     if (!rootPath.value) {
       throw new Error('No project open')
     }
+    console.info()
     const project = await workspaceService.createRequest(
       rootPath.value,
       parentRelative,
       requestName,
+      {
+        body: '',
+        headers: [],
+        method: httpMethod,
+        name: requestName,
+        params: [],
+        url: ''
+      }
     )
     applyOpened(project)
 
@@ -143,6 +152,56 @@ export const useProjectStore = defineStore('project', () => {
 
     await selectRequest(relativePath)
     return relativePath
+  }
+
+  async function renameEntry(relativePath: string, newName: string): Promise<string> {
+    if (!rootPath.value) {
+      throw new Error('No project open')
+    }
+
+    const trimmed = newName.trim()
+    if (!trimmed) {
+      throw new Error('El nombre no puede estar vacío')
+    }
+
+    await flushSave()
+
+    const isRequest = relativePath.toLowerCase().endsWith('.json')
+    const stem = trimmed.replace(/\.json$/i, '')
+    const baseName = isRequest ? `${stem}.json` : stem
+    const parent = relativePath.includes('/')
+      ? relativePath.slice(0, relativePath.lastIndexOf('/'))
+      : ''
+    const newRelative = parent ? `${parent}/${baseName}` : baseName
+
+    if (newRelative === relativePath) {
+      return newRelative
+    }
+
+    const project = await workspaceService.renameEntry(
+      rootPath.value,
+      relativePath,
+      trimmed,
+    )
+    applyOpened(project)
+
+    const workspaceStore = useWorkspaceStore()
+    workspaceStore.remapPaths(relativePath, newRelative)
+    if (isRequest) {
+      workspaceStore.renameTab(newRelative, stem)
+    }
+
+    if (activeDraft.value) {
+      const draftId = activeDraft.value.id
+      if (draftId === relativePath || draftId === newRelative) {
+        activeDraft.value.id = newRelative
+        activeDraft.value.name = stem
+      } else if (draftId.startsWith(`${relativePath}/`)) {
+        activeDraft.value.id = `${newRelative}${draftId.slice(relativePath.length)}`
+      }
+    }
+
+    return newRelative
   }
 
   async function deleteEntry(relativePath: string): Promise<void> {
@@ -301,6 +360,7 @@ export const useProjectStore = defineStore('project', () => {
     refresh,
     createFolder,
     createRequest,
+    renameEntry,
     deleteEntry,
     moveEntry,
     selectRequest,

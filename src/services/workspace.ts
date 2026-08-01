@@ -74,6 +74,7 @@ export async function createRequest(
   name: string,
   draft?: RequestFile,
 ): Promise<OpenedProject> {
+  console.info(draft)
   return invoke<OpenedProject>('create_request', {
     projectRoot,
     parentRelative,
@@ -102,6 +103,18 @@ export async function writeRequest(
     projectRoot,
     relativePath,
     draft: toFile(draft),
+  })
+}
+
+export async function renameEntry(
+  projectRoot: string,
+  relativePath: string,
+  newName: string,
+): Promise<OpenedProject> {
+  return invoke<OpenedProject>('rename_entry', {
+    projectRoot,
+    relativePath,
+    newName,
   })
 }
 

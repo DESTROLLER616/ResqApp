@@ -131,6 +131,20 @@ pub fn write_request(
 }
 
 #[tauri::command]
+pub fn rename_entry(
+    project_root: String,
+    relative_path: String,
+    new_name: String,
+) -> Result<OpenedProject, String> {
+    request_fs::rename_entry(
+        PathBuf::from(project_root).as_path(),
+        &relative_path,
+        &new_name,
+    )
+    .map_err(map_err)
+}
+
+#[tauri::command]
 pub fn delete_entry(
     project_root: String,
     relative_path: String,

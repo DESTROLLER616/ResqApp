@@ -19,6 +19,7 @@ pub fn run() {
             commands::workspace::create_request,
             commands::workspace::read_request,
             commands::workspace::write_request,
+            commands::workspace::rename_entry,
             commands::workspace::delete_entry,
             commands::workspace::move_entry,
         ])

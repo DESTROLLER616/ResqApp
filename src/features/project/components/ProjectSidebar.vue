@@ -9,6 +9,7 @@ import {
   NModal,
   NSpace,
   NTree,
+  NSelect,
   useMessage,
 } from 'naive-ui'
 import type {
@@ -16,13 +17,14 @@ import type {
   TreeDragInfo,
   TreeDropInfo,
   TreeOption,
+  SelectOption
 } from 'naive-ui'
-import { FolderOpen, FolderPlus, FileAlt, TrashAlt } from '@vicons/fa'
+import { FolderOpen, FolderPlus, FileAlt, TrashAlt, PenAlt } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { HttpMethod } from '@/types/http'
+import { HTTP_METHODS, type HttpMethod } from '@/types/http'
 import type { ProjectTreeNode } from '@/types/project'
 
 interface ProjectTreeOption extends TreeOption {
@@ -44,6 +46,16 @@ const createModal = ref<{
   parentRelative: string
 } | null>(null)
 const createName = ref('')
+const createHttpMethod = ref(HTTP_METHODS[0])
+const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
+  label: method,
+  value: method,
+}))
+const renameModal = ref<{
+  relativePath: string
+  kind: 'folder' | 'request'
+} | null>(null)
+const renameName = ref('')
 const contextMenu = ref<{
   x: number
   y: number
@@ -246,6 +258,7 @@ function openCreate(type: 'folder' | 'request', parentRelative = '') {
 async function confirmCreate(): Promise<boolean> {
   if (!createModal.value) return false
   const nameValue = createName.value.trim()
+  const httpMethodValue = createHttpMethod.value
   if (!nameValue) {
     message.warning('El nombre no puede estar vacío')
     return false
@@ -256,7 +269,7 @@ async function confirmCreate(): Promise<boolean> {
       await projectStore.createFolder(createModal.value.parentRelative, nameValue)
       message.success('Carpeta creada')
     } else {
-      await projectStore.createRequest(createModal.value.parentRelative, nameValue)
+      await projectStore.createRequest(createModal.value.parentRelative, nameValue, httpMethodValue)
       message.success('Petición creada')
     }
     createModal.value = null
@@ -286,13 +299,47 @@ const dropdownOptions = computed<DropdownOption[]>(() => {
       },
     )
   }
-  items.push({
-    label: 'Eliminar',
-    key: 'delete',
-    icon: () => h(NIcon, { component: TrashAlt }),
-  })
+  items.push(
+    {
+      label: 'Cambiar nombre',
+      key: 'rename',
+      icon: () => h(NIcon, { component: PenAlt }),
+    },
+    {
+      label: 'Eliminar',
+      key: 'delete',
+      icon: () => h(NIcon, { component: TrashAlt }),
+    },
+  )
   return items
 })
+
+function openRename(option: ProjectTreeOption): void {
+  renameModal.value = {
+    relativePath: option.relativePath,
+    kind: option.kind,
+  }
+  renameName.value = String(option.label ?? '')
+}
+
+async function confirmRename(): Promise<boolean> {
+  if (!renameModal.value) return false
+  const nameValue = renameName.value.trim()
+  if (!nameValue) {
+    message.warning('El nombre no puede estar vacío')
+    return false
+  }
+
+  try {
+    await projectStore.renameEntry(renameModal.value.relativePath, nameValue)
+    message.success('Nombre actualizado')
+    renameModal.value = null
+    return true
+  } catch (e) {
+    message.error(e instanceof Error ? e.message : String(e))
+    return false
+  }
+}
 
 function onNodeContextMenu(event: MouseEvent, option: TreeOption) {
   event.preventDefault()
@@ -316,6 +363,10 @@ async function onDropdownSelect(key: string | number) {
     openCreate('request', option.relativePath)
     return
   }
+  if (key === 'rename') {
+    openRename(option)
+    return
+  }
   if (key === 'delete') {
     try {
       await projectStore.deleteEntry(option.relativePath)
@@ -328,6 +379,19 @@ async function onDropdownSelect(key: string | number) {
 
 function closeContextMenu() {
   contextMenu.value = null
+}
+
+function nodeProps({ option }: { option: TreeOption }) {
+  return {
+    onContextmenu(e: MouseEvent) {
+      e.preventDefault()
+      contextMenu.value = {
+        x: e.clientX,
+        y: e.clientY,
+        option: option as ProjectTreeOption,
+      }
+    },
+  }
 }
 
 function isInvalidFolderTarget(drag: ProjectTreeOption, targetPath: string): boolean {
@@ -486,6 +550,7 @@ async function onRootDrop(event: DragEvent) {
           v-if="treeData.length > 0"
           block-line
           expand-on-click
+          :node-props="nodeProps"
           :expand-on-dragenter="false"
           :animated="false"
           :draggable="canDrag"
@@ -496,7 +561,7 @@ async function onRootDrop(event: DragEvent) {
           :allow-drop="allowDrop"
           @update:selected-keys="onSelect"
           @update:expanded-keys="onUpdateExpandedKeys"
-          @node-contextmenu="onNodeContextMenu"
+          @node-contextmenu.prevent="onNodeContextMenu"
           @dragstart="onDragStart"
           @dragover="onTreeDragOver"
           @dragend="onDragEnd"
@@ -547,6 +612,30 @@ async function onRootDrop(event: DragEvent) {
         v-model:value="createName"
         :placeholder="createModal?.type === 'folder' ? 'Nombre de carpeta' : 'Nombre de petición'"
         @keyup.enter="confirmCreate"
+      />
+
+      <n-select
+        v-if="createModal?.type === 'request'"
+        v-model:value="createHttpMethod"
+        :options="methodOptions"
+      />
+    </n-modal>
+
+    <n-modal
+      :show="renameModal !== null"
+      preset="dialog"
+      title="Cambiar nombre"
+      positive-text="Guardar"
+      negative-text="Cancelar"
+      @positive-click="confirmRename"
+      @negative-click="renameModal = null"
+      @close="renameModal = null"
+      @update:show="(show) => !show && (renameModal = null)"
+    >
+      <n-input
+        v-model:value="renameName"
+        :placeholder="renameModal?.kind === 'folder' ? 'Nombre de carpeta' : 'Nombre de petición'"
+        @keyup.enter="confirmRename"
       />
     </n-modal>
   </div>

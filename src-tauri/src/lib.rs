@@ -9,6 +9,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            commands::http::send_request,
             commands::workspace::list_recent_projects,
             commands::workspace::remove_recent_project,
             commands::workspace::open_project,

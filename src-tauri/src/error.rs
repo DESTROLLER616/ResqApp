@@ -13,6 +13,9 @@ pub enum AppError {
     #[error(transparent)]
     Json(#[from] serde_json::Error),
 
+    #[error(transparent)]
+    Http(#[from] reqwest::Error),
+
     #[error("invalid path: {0}")]
     InvalidPath(String),
 }

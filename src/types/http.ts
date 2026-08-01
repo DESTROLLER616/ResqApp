@@ -44,3 +44,11 @@ export interface RequestFile {
   headers: HttpHeader[]
   body: string
 }
+
+export interface HttpResponse {
+  status: number
+  statusText: string
+  headers: Record<string, string>
+  body: string
+  elapsedMs: number
+}

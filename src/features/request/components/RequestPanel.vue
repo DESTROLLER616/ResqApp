@@ -15,10 +15,16 @@ import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useResizableSize } from '@/composables/use-resizable-size'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { HTTP_METHODS, type HttpMethod, type HttpParam } from '@/types/http'
+import {
+  HTTP_METHODS,
+  type HttpMethod,
+  type HttpParam,
+  type HttpResponse,
+} from '@/types/http'
 import RequestBodyEditor from './request-body-editor.vue'
 import RequestHeadersEditor from './request-headers-editor.vue'
 import RequestParamsEditor from './request-params-editor.vue'
+import makeRequest from '../make-request.ts'
 
 const RESPONSE_MIN = 120
 const REQUEST_MIN = 180
@@ -35,6 +41,9 @@ const { size: responseHeight, resizeBy, setMax } = useResizableSize({
   min: RESPONSE_MIN,
   max: 600,
 })
+const response = ref<HttpResponse | null>(null)
+const responseError = ref<string | null>(null)
+const isSending = ref(false)
 
 /** Local input value so URL normalization does not fight caret while typing. */
 const urlDraft = ref('')
@@ -44,6 +53,22 @@ const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
   label: String(method).charAt(0).toUpperCase() + String(method).slice(1),
   value: method,
 }))
+
+async function sendRequest() {
+  const draft = projectStore.activeDraft
+  if (!draft) return
+  responseError.value = null
+  isSending.value = true
+  try {
+    response.value = await makeRequest(draft)
+  } catch (error) {
+    response.value = null
+    responseError.value =
+      error instanceof Error ? error.message : 'No se pudo enviar la petición'
+  } finally {
+    isSending.value = false
+  }
+}
 
 function buildCompleteUrl(base: string, params: HttpParam[]): string {
   try {
@@ -181,7 +206,14 @@ watch(
               placeholder="https://api.example.com/…"
               @update:value="updateUrl"
             />
-            <n-button type="primary" class="request-panel__send">Send</n-button>
+            <n-button
+              :loading="isSending"
+              @click="sendRequest"
+              type="primary"
+              class="request-panel__send"
+            >
+              Send
+            </n-button>
           </div>
         </div>
 
@@ -212,7 +244,26 @@ watch(
         :style="{ height: `${responseHeight}px`, flexBasis: `${responseHeight}px` }"
       >
         <div class="request-panel__response-title">Response</div>
-        <n-empty description="Envía una petición para ver la respuesta" size="small" />
+        <div v-if="responseError" class="request-panel__error">
+          {{ responseError }}
+        </div>
+        <div v-else-if="!response">
+          <n-empty description="Envía una petición para ver la respuesta" size="small" />
+        </div>
+        <div v-else class="request-panel__response-content">
+          <div class="request-panel__meta">
+            <n-text strong>{{ response.status }} {{ response.statusText }}</n-text>
+            <n-text depth="3">{{ response.elapsedMs }} ms</n-text>
+          </div>
+          <n-tabs default-value="body">
+            <n-tab-pane name="body" tab="Body">
+              <n-empty description="Envía una petición para ver la respuesta" size="small" />
+            </n-tab-pane>
+            <n-tab-pane name="headers" tab="Header">
+              <n-empty description="Envía una petición para ver la respuesta" size="small" />
+            </n-tab-pane>
+          </n-tabs>
+        </div>
       </div>
     </template>
 
@@ -330,6 +381,32 @@ watch(
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--app-muted);
+}
+
+.request-panel__error {
+  color: #c53030;
+  white-space: pre-wrap;
+}
+
+.request-panel__response-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.request-panel__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.request-panel__body {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .request-panel__placeholder {

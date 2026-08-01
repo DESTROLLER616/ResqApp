@@ -2,7 +2,6 @@
 import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import type { HttpHeader } from '@/types/http'
-import { TrashAlt } from '@vicons/fa';
 
 const props = defineProps<{
   headers: HttpHeader[]
@@ -34,11 +33,8 @@ function addHeader(): void {
 }
 
 function deleteHeader(id: string): void {
-  const index = props.headers.findIndex((header) => header.id === id)
-
-  if (index > -1){
-    props.headers.splice(index, 1)
-  }
+  const headers = props.headers.filter((header) => header.id !== id)
+  projectStore.updateActiveRequest({ headers })
 }
 </script>
 
@@ -50,7 +46,7 @@ function deleteHeader(id: string): void {
           <th style="width: 25%">Name</th>
           <th style="width: 25%">Value</th>
           <th style="width: 25%; text-align: center">Active</th>
-          <th style="width: 25%;">Acciones</th>
+          <th style="width: 25%">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -77,9 +73,7 @@ function deleteHeader(id: string): void {
               @update:checked="(enabled) => updateHeader(header.id, { enabled })"
             />
           </td>
-          <n-button type="error" @click="deleteHeader(header.id)">
-            Borrar
-          </n-button>
+          <n-button type="error" @click="deleteHeader(header.id)"> Borrar </n-button>
         </tr>
       </tbody>
     </n-table>

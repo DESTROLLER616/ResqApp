@@ -38,17 +38,11 @@ export async function openProject(path: string): Promise<OpenedProject> {
   return invoke<OpenedProject>('open_project', { path })
 }
 
-export async function createProject(
-  parentDir: string,
-  name: string,
-): Promise<OpenedProject> {
+export async function createProject(parentDir: string, name: string): Promise<OpenedProject> {
   return invoke<OpenedProject>('create_project', { parentDir, name })
 }
 
-export async function initProject(
-  path: string,
-  name?: string,
-): Promise<OpenedProject> {
+export async function initProject(path: string, name?: string): Promise<OpenedProject> {
   return invoke<OpenedProject>('init_project', { path, name: name ?? null })
 }
 
@@ -74,7 +68,6 @@ export async function createRequest(
   name: string,
   draft?: RequestFile,
 ): Promise<OpenedProject> {
-  console.info(draft)
   return invoke<OpenedProject>('create_request', {
     projectRoot,
     parentRelative,

@@ -12,13 +12,7 @@ import {
   NSelect,
   useMessage,
 } from 'naive-ui'
-import type {
-  DropdownOption,
-  TreeDragInfo,
-  TreeDropInfo,
-  TreeOption,
-  SelectOption
-} from 'naive-ui'
+import type { DropdownOption, TreeDragInfo, TreeDropInfo, TreeOption, SelectOption } from 'naive-ui'
 import { FolderOpen, FolderPlus, FileAlt, TrashAlt, PenAlt } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
@@ -103,9 +97,7 @@ function collectNonEmptyFolderKeys(nodes: ProjectTreeOption[]): string[] {
   const keys: string[] = []
   for (const node of nodes) {
     if (node.kind !== 'folder') continue
-    const children = Array.isArray(node.children)
-      ? (node.children as ProjectTreeOption[])
-      : []
+    const children = Array.isArray(node.children) ? (node.children as ProjectTreeOption[]) : []
     if (children.length === 0) continue
     keys.push(String(node.key))
     keys.push(...collectNonEmptyFolderKeys(children))
@@ -185,9 +177,7 @@ watch(
       return
     }
 
-    const retained = expandedKeys.value
-      .map(String)
-      .filter((key) => folderKeySet.has(key))
+    const retained = expandedKeys.value.map(String).filter((key) => folderKeySet.has(key))
     const discovered = nonEmptyFolderKeys.filter((key) => !knownFolderKeys.value.has(key))
 
     const expanded = new Set<string>()
@@ -204,13 +194,10 @@ watch(
   { immediate: true },
 )
 
-watch(
-  [isSearchActive, treeData],
-  ([searching, nodes]) => {
-    if (!searching) return
-    expandedKeys.value = collectFolderKeys(nodes)
-  },
-)
+watch([isSearchActive, treeData], ([searching, nodes]) => {
+  if (!searching) return
+  expandedKeys.value = collectFolderKeys(nodes)
+})
 
 const selectedKeys = computed(() => {
   if (activeRequestPath.value) {
@@ -396,10 +383,7 @@ function nodeProps({ option }: { option: TreeOption }) {
 
 function isInvalidFolderTarget(drag: ProjectTreeOption, targetPath: string): boolean {
   if (drag.kind !== 'folder') return false
-  return (
-    targetPath === drag.relativePath ||
-    targetPath.startsWith(`${drag.relativePath}/`)
-  )
+  return targetPath === drag.relativePath || targetPath.startsWith(`${drag.relativePath}/`)
 }
 
 function onDragStart({ node, event }: TreeDragInfo) {
@@ -419,14 +403,7 @@ function onDragEnd() {
   isRootDropActive.value = false
 }
 
-function allowDrop({
-  node,
-  dropPosition: _dropPosition,
-}: {
-  node: TreeOption
-  dropPosition: 'before' | 'inside' | 'after'
-  phase: 'drag' | 'drop'
-}): boolean {
+function allowDrop({ node }: { node: TreeOption; phase: 'drag' | 'drop' }): boolean {
   if (!canDrag.value) return false
 
   const drag = draggingNode.value
@@ -444,10 +421,7 @@ function allowDrop({
   return !isInvalidFolderTarget(drag, parentOf(target.relativePath))
 }
 
-function resolveDropParent(
-  target: ProjectTreeOption,
-  _dropPosition: TreeDropInfo['dropPosition'],
-): string {
+function resolveDropParent(target: ProjectTreeOption): string {
   if (target.kind === 'folder') {
     return target.relativePath
   }
@@ -477,10 +451,10 @@ async function moveToParent(fromRelative: string, toParentRelative: string): Pro
   }
 }
 
-async function onDrop({ node, dragNode, dropPosition }: TreeDropInfo) {
+async function onDrop({ node, dragNode }: TreeDropInfo) {
   const drag = dragNode as ProjectTreeOption
   const target = node as ProjectTreeOption
-  const toParent = resolveDropParent(target, dropPosition)
+  const toParent = resolveDropParent(target)
 
   if (isInvalidFolderTarget(drag, toParent)) {
     message.warning('No se puede mover una carpeta dentro de sí misma')
@@ -608,17 +582,19 @@ async function onRootDrop(event: DragEvent) {
       @close="createModal = null"
       @update:show="(show) => !show && (createModal = null)"
     >
-      <n-input
-        v-model:value="createName"
-        :placeholder="createModal?.type === 'folder' ? 'Nombre de carpeta' : 'Nombre de petición'"
-        @keyup.enter="confirmCreate"
-      />
+      <n-space vertical size="medium">
+        <n-input
+          v-model:value="createName"
+          :placeholder="createModal?.type === 'folder' ? 'Nombre de carpeta' : 'Nombre de petición'"
+          @keyup.enter="confirmCreate"
+        />
 
-      <n-select
-        v-if="createModal?.type === 'request'"
-        v-model:value="createHttpMethod"
-        :options="methodOptions"
-      />
+        <n-select
+          v-if="createModal?.type === 'request'"
+          v-model:value="createHttpMethod"
+          :options="methodOptions"
+        />
+      </n-space>
     </n-modal>
 
     <n-modal
@@ -690,7 +666,10 @@ async function onRootDrop(event: DragEvent) {
   font-size: 11px;
   color: var(--app-muted);
   text-align: center;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .project-sidebar__root-drop--active {

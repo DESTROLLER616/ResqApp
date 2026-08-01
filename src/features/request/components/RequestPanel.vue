@@ -1,26 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
-import {
-  NButton,
-  NEmpty,
-  NInput,
-  NSelect,
-  NTabPane,
-  NTabs,
-  NText,
-} from 'naive-ui'
+import { NButton, NEmpty, NInput, NSelect, NTabPane, NTabs, NText } from 'naive-ui'
 import type { SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useResizableSize } from '@/composables/use-resizable-size'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
-import {
-  HTTP_METHODS,
-  type HttpMethod,
-  type HttpParam,
-  type HttpResponse,
-} from '@/types/http'
+import { HTTP_METHODS, type HttpMethod, type HttpParam, type HttpResponse } from '@/types/http'
 import RequestBodyEditor from './request-body-editor.vue'
 import RequestHeadersEditor from './request-headers-editor.vue'
 import RequestParamsEditor from './request-params-editor.vue'
@@ -38,7 +25,11 @@ const { activeDraft, hasProject } = storeToRefs(projectStore)
 const { activeRequestPath } = storeToRefs(workspaceStore)
 
 const panelRef = useTemplateRef<HTMLElement>('panel')
-const { size: responseHeight, resizeBy, setMax } = useResizableSize({
+const {
+  size: responseHeight,
+  resizeBy,
+  setMax,
+} = useResizableSize({
   initial: RESPONSE_INITIAL,
   min: RESPONSE_MIN,
   max: 600,
@@ -52,7 +43,7 @@ const METHODS_WITHOUT_BODY: ReadonlySet<HttpMethod> = new Set(['GET', 'HEAD'])
 
 const isBodyDisabled = computed(() => {
   const method = activeDraft.value?.method
-  return method != null && METHODS_WITHOUT_BODY.has(method)
+  return method !== undefined && METHODS_WITHOUT_BODY.has(method)
 })
 
 /** Local input value so URL normalization does not fight caret while typing. */
@@ -73,8 +64,7 @@ async function sendRequest() {
     response.value = await makeRequest(draft)
   } catch (error) {
     response.value = null
-    responseError.value =
-      error instanceof Error ? error.message : 'No se pudo enviar la petición'
+    responseError.value = error instanceof Error ? error.message : 'No se pudo enviar la petición'
   } finally {
     isSending.value = false
   }
@@ -127,28 +117,23 @@ function updateUrl(raw: string): void {
     const existingEnabled = activeDraft.value?.params.filter((p) => p.enabled) ?? []
     const usedIds = new Set<string>()
 
-    const fromUrl: HttpParam[] = [...parsed.searchParams.entries()].map(
-      ([key, value]) => {
-        const existing = existingEnabled.find(
-          (param) => param.key === key && !usedIds.has(param.id),
-        )
-        if (existing) {
-          usedIds.add(existing.id)
-          return { ...existing, key, value, enabled: true }
-        }
-        return {
-          id: crypto.randomUUID(),
-          key,
-          value,
-          enabled: true,
-        }
-      },
-    )
+    const fromUrl: HttpParam[] = [...parsed.searchParams.entries()].map(([key, value]) => {
+      const existing = existingEnabled.find((param) => param.key === key && !usedIds.has(param.id))
+      if (existing) {
+        usedIds.add(existing.id)
+        return { ...existing, key, value, enabled: true }
+      }
+      return {
+        id: crypto.randomUUID(),
+        key,
+        value,
+        enabled: true,
+      }
+    })
 
     const emptyEnabled =
       activeDraft.value?.params.filter((param) => param.enabled && !param.key) ?? []
-    const disabled =
-      activeDraft.value?.params.filter((param) => !param.enabled) ?? []
+    const disabled = activeDraft.value?.params.filter((param) => !param.enabled) ?? []
 
     parsed.search = ''
     skipParamsUrlSync = true
@@ -239,12 +224,7 @@ watch(
         </div>
 
         <div class="request-panel__editor">
-          <n-tabs
-            v-model:value="requestTab"
-            type="line"
-            size="small"
-            class="request-panel__tabs"
-          >
+          <n-tabs v-model:value="requestTab" type="line" size="small" class="request-panel__tabs">
             <n-tab-pane name="params" tab="Params" display-directive="show:lazy">
               <RequestParamsEditor :params="activeDraft.params ?? []" />
             </n-tab-pane>

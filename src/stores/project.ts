@@ -117,19 +117,18 @@ export const useProjectStore = defineStore('project', () => {
 
   async function createFolder(parentRelative: string, folderName: string): Promise<void> {
     if (!rootPath.value) return
-    const project = await workspaceService.createFolder(
-      rootPath.value,
-      parentRelative,
-      folderName,
-    )
+    const project = await workspaceService.createFolder(rootPath.value, parentRelative, folderName)
     applyOpened(project)
   }
 
-  async function createRequest(parentRelative: string, requestName: string, httpMethod: HttpMethod): Promise<string> {
+  async function createRequest(
+    parentRelative: string,
+    requestName: string,
+    httpMethod: HttpMethod,
+  ): Promise<string> {
     if (!rootPath.value) {
       throw new Error('No project open')
     }
-    console.info()
     const project = await workspaceService.createRequest(
       rootPath.value,
       parentRelative,
@@ -140,15 +139,13 @@ export const useProjectStore = defineStore('project', () => {
         method: httpMethod,
         name: requestName,
         params: [],
-        url: ''
-      }
+        url: '',
+      },
     )
     applyOpened(project)
 
     const stem = requestName.replace(/\.json$/i, '')
-    const relativePath = parentRelative
-      ? `${parentRelative}/${stem}.json`
-      : `${stem}.json`
+    const relativePath = parentRelative ? `${parentRelative}/${stem}.json` : `${stem}.json`
 
     await selectRequest(relativePath)
     return relativePath
@@ -178,11 +175,7 @@ export const useProjectStore = defineStore('project', () => {
       return newRelative
     }
 
-    const project = await workspaceService.renameEntry(
-      rootPath.value,
-      relativePath,
-      trimmed,
-    )
+    const project = await workspaceService.renameEntry(rootPath.value, relativePath, trimmed)
     applyOpened(project)
 
     const workspaceStore = useWorkspaceStore()
@@ -211,7 +204,10 @@ export const useProjectStore = defineStore('project', () => {
     applyOpened(project)
     workspaceStore.closeMatching(relativePath)
 
-    if (activeDraft.value?.id === relativePath || activeDraft.value?.id.startsWith(`${relativePath}/`)) {
+    if (
+      activeDraft.value?.id === relativePath ||
+      activeDraft.value?.id.startsWith(`${relativePath}/`)
+    ) {
       activeDraft.value = null
       const activePath = workspaceStore.activeRequestPath
       if (activePath) {
@@ -220,10 +216,7 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
-  async function moveEntry(
-    fromRelative: string,
-    toParentRelative: string,
-  ): Promise<string> {
+  async function moveEntry(fromRelative: string, toParentRelative: string): Promise<string> {
     if (!rootPath.value) {
       throw new Error('No project open')
     }
@@ -234,19 +227,13 @@ export const useProjectStore = defineStore('project', () => {
     if (!baseName) {
       throw new Error('Invalid source path')
     }
-    const newRelative = toParentRelative
-      ? `${toParentRelative}/${baseName}`
-      : baseName
+    const newRelative = toParentRelative ? `${toParentRelative}/${baseName}` : baseName
 
     if (newRelative === fromRelative) {
       return newRelative
     }
 
-    const project = await workspaceService.moveEntry(
-      rootPath.value,
-      fromRelative,
-      toParentRelative,
-    )
+    const project = await workspaceService.moveEntry(rootPath.value, fromRelative, toParentRelative)
     applyOpened(project)
 
     const workspaceStore = useWorkspaceStore()
@@ -268,13 +255,10 @@ export const useProjectStore = defineStore('project', () => {
     if (!rootPath.value) return
     await flushSave()
 
-    const draft = ensureDraftShape(
-      await workspaceService.readRequest(rootPath.value, relativePath),
-    )
+    const draft = ensureDraftShape(await workspaceService.readRequest(rootPath.value, relativePath))
     activeDraft.value = draft
 
-    const tabName =
-      findRequestName(tree.value, relativePath) ?? draft.name ?? relativePath
+    const tabName = findRequestName(tree.value, relativePath) ?? draft.name ?? relativePath
     const workspaceStore = useWorkspaceStore()
     workspaceStore.openRequest(relativePath, tabName)
   }
@@ -369,4 +353,3 @@ export const useProjectStore = defineStore('project', () => {
     clearActiveDraft,
   }
 })
-

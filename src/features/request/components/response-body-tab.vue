@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import {
-  NEmpty,
-} from 'naive-ui'
+import { NEmpty } from 'naive-ui'
 
 defineProps<{
-    responseBody: string 
+  responseBody: string
 }>()
 </script>
 

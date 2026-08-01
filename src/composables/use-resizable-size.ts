@@ -6,9 +6,7 @@ interface UseResizableSizeOptions {
   max: number
 }
 
-export function useResizableSize(
-  options: UseResizableSizeOptions,
-): {
+export function useResizableSize(options: UseResizableSizeOptions): {
   size: Ref<number>
   resizeBy: (delta: number) => void
   setMax: (max: number) => void

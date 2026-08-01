@@ -16,7 +16,8 @@ const headerEntries = computed(() => Object.entries(props.responseHeaders))
 
   <div v-else class="response-headers-tab">
     <div v-for="[key, value] in headerEntries" :key="key" class="response-headers-tab__row">
-      <strong>{{ key }}</strong>: {{ value }}
+      <strong>{{ key }}</strong
+      >: {{ value }}
     </div>
   </div>
 </template>

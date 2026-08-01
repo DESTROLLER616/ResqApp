@@ -1,15 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import {
-  NButton,
-  NEmpty,
-  NIcon,
-  NInput,
-  NModal,
-  NSpace,
-  NTooltip,
-  useMessage,
-} from 'naive-ui'
+import { NButton, NEmpty, NIcon, NInput, NModal, NSpace, NTooltip, useMessage } from 'naive-ui'
 import { FolderOpen, FolderPlus, Times } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import * as workspaceService from '@/services/workspace'
@@ -188,9 +179,7 @@ async function confirmInit(): Promise<boolean> {
       @positive-click="confirmCreate"
     >
       <n-space vertical>
-        <span class="recent-sidebar__hint">
-          Se creará en: {{ createParentDir }}
-        </span>
+        <span class="recent-sidebar__hint"> Se creará en: {{ createParentDir }} </span>
         <n-input
           v-model:value="createName"
           placeholder="Nombre del proyecto"
@@ -208,9 +197,7 @@ async function confirmInit(): Promise<boolean> {
       @positive-click="confirmInit"
     >
       <n-space vertical>
-        <span class="recent-sidebar__hint">
-          La carpeta no es un proyecto. ¿Inicializarla?
-        </span>
+        <span class="recent-sidebar__hint"> La carpeta no es un proyecto. ¿Inicializarla? </span>
         <span class="recent-sidebar__hint">{{ initPath }}</span>
         <n-input v-model:value="initName" placeholder="Nombre del proyecto" />
       </n-space>

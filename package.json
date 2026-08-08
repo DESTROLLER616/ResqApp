@@ -19,6 +19,7 @@
     "@tauri-apps/plugin-dialog": "^2.7.2",
     "@tauri-apps/plugin-opener": "^2",
     "@vicons/fa": "^0.13.0",
+    "highlight.js": "^11.11.1",
     "naive-ui": "^2.44.1",
     "pinia": "^4.0.2",
     "vfonts": "^0.0.3",

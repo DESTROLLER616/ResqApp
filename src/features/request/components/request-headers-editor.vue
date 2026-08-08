@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
+import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import type { HttpHeader } from '@/types/http'
+import { Plus, TrashAlt } from '@vicons/fa'
 
 const props = defineProps<{
   headers: HttpHeader[]
@@ -46,7 +47,7 @@ function deleteHeader(id: string): void {
           <th style="width: 25%">Name</th>
           <th style="width: 25%">Value</th>
           <th style="width: 25%; text-align: center">Active</th>
-          <th style="width: 25%">Acciones</th>
+          <th style="width: 25%; text-align: center">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -73,12 +74,27 @@ function deleteHeader(id: string): void {
               @update:checked="(enabled) => updateHeader(header.id, { enabled })"
             />
           </td>
-          <n-button type="error" @click="deleteHeader(header.id)"> Borrar </n-button>
+          <td style="text-align: center">
+            <n-button type="error" @click="deleteHeader(header.id)">
+              <template #icon>
+                <n-icon :component="TrashAlt" size="12"></n-icon>
+              </template>
+            </n-button>
+          </td>
         </tr>
       </tbody>
     </n-table>
     <div class="headers-editor__actions">
-      <n-button size="small" @click="addHeader">Add header</n-button>
+      <n-tooltip trigger="hover" placement="bottom">
+        <template #trigger>
+          <n-button size="small" :bordered="false" @click="addHeader">
+            <template #icon>
+              <n-icon :component="Plus" size="28" :color="'#ff6543'" />
+            </template>
+          </n-button>
+        </template>
+        Agregar nuevo parámetro
+      </n-tooltip>
     </div>
   </div>
 </template>

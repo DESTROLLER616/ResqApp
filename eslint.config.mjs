@@ -12,9 +12,9 @@ export default withVueTs(
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'eqeqeq': ['error', 'always'],
+      eqeqeq: ['error', 'always'],
       'no-bitwise': 'error',
-      'no-empty': 'error'
+      'no-empty': 'error',
     },
   },
   eslintConfigPrettier,

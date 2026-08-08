@@ -20,6 +20,9 @@ importers:
       '@vicons/fa':
         specifier: ^0.13.0
         version: 0.13.0
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
       naive-ui:
         specifier: ^2.44.1
         version: 2.44.1(vue@3.5.40(typescript@5.6.3))

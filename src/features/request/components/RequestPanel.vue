@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
-import { NButton, NEmpty, NInput, NSelect, NTabPane, NTabs, NText } from 'naive-ui'
+import { NButton, NEmpty, NInput, NSelect, NTabPane, NTabs, NText, NIcon, NTooltip } from 'naive-ui'
 import type { SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
@@ -14,6 +14,8 @@ import RequestParamsEditor from './request-params-editor.vue'
 import ResponseBodyTab from './response-body-tab.vue'
 import makeRequest from '../make-request.ts'
 import ResponseHeadersTab from './response-headers-tab.vue'
+import formatBytes from '@/utils/format-numbers.ts'
+import { Upload } from '@vicons/fa'
 
 const RESPONSE_MIN = 120
 const REQUEST_MIN = 180
@@ -207,14 +209,21 @@ watch(
               placeholder="https://api.example.com/…"
               @update:value="updateUrl"
             />
-            <n-button
-              :loading="isSending"
-              @click="sendRequest"
-              type="primary"
-              class="request-panel__send"
-            >
-              Send
-            </n-button>
+            <n-tooltip trigger="hover" placement="bottom">
+              <template #trigger>
+                <n-button
+                  :loading="isSending"
+                  @click="sendRequest"
+                  type="primary"
+                  class="request-panel__send"
+                >
+                  <template #icon>
+                    <n-icon :component="Upload" size="12"></n-icon>
+                  </template>
+                </n-button>
+              </template>
+              Enviar petición
+            </n-tooltip>
           </div>
         </div>
 
@@ -260,11 +269,17 @@ watch(
         <div v-else class="request-panel__response-content">
           <div class="request-panel__meta">
             <n-text strong>{{ response.status }} {{ response.statusText }}</n-text>
-            <n-text depth="3">{{ response.elapsedMs }} ms</n-text>
+            <n-text depth="3"
+              >{{ response.elapsedMs }} ms |
+              {{ formatBytes(Number(response.headers['content-length'] ?? 0)) }}</n-text
+            >
           </div>
           <n-tabs default-value="body" class="request-panel__response-tabs">
             <n-tab-pane name="body" tab="Body">
-              <ResponseBodyTab :response-body="response.body"></ResponseBodyTab>
+              <ResponseBodyTab
+                :response-body="response.body"
+                :content-type="response.headers['content-type']"
+              />
             </n-tab-pane>
             <n-tab-pane name="headers" tab="Headers">
               <ResponseHeadersTab :response-headers="response.headers"></ResponseHeadersTab>

@@ -10,6 +10,8 @@ import {
   NSpace,
   NTree,
   NSelect,
+  NTooltip,
+  NText,
   useMessage,
 } from 'naive-ui'
 import type { DropdownOption, TreeDragInfo, TreeDropInfo, TreeOption, SelectOption } from 'naive-ui'
@@ -60,10 +62,38 @@ const isRootDropActive = ref(false)
 const isMoving = ref(false)
 const expandedKeys = ref<Array<string | number>>([])
 const knownFolderKeys = ref(new Set<string>())
+/** Snapshot of expanded folders before search expands everything. */
+const expandedKeysBeforeSearch = ref<Array<string | number> | null>(null)
+
+const EXPANDED_STORAGE_PREFIX = 'project-sidebar:expanded:'
 
 const isSearchActive = computed(() => search.value.trim().length > 0)
 // Allow dragging even while searching; we'll still validate on drop.
 const canDrag = computed(() => !isMoving.value)
+
+function storageKeyForProject(path: string): string {
+  return `${EXPANDED_STORAGE_PREFIX}${path}`
+}
+
+function loadExpandedKeys(path: string): string[] {
+  try {
+    const raw = localStorage.getItem(storageKeyForProject(path))
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((key): key is string => typeof key === 'string')
+  } catch {
+    return []
+  }
+}
+
+function saveExpandedKeys(path: string, keys: Array<string | number>): void {
+  try {
+    localStorage.setItem(storageKeyForProject(path), JSON.stringify(keys.map(String)))
+  } catch {
+    // Quota / private mode — ignore; expansion still works in-session.
+  }
+}
 
 function parentOf(relativePath: string): string {
   const index = relativePath.lastIndexOf('/')
@@ -156,10 +186,15 @@ const treeData = computed(() => {
   return toTreeOptions(tree.value, query)
 })
 
-watch(rootPath, () => {
-  expandedKeys.value = []
-  knownFolderKeys.value = new Set()
-})
+watch(
+  rootPath,
+  (path) => {
+    knownFolderKeys.value = new Set()
+    expandedKeysBeforeSearch.value = null
+    expandedKeys.value = path ? loadExpandedKeys(path) : []
+  },
+  { immediate: true },
+)
 
 watch(
   treeData,
@@ -170,33 +205,54 @@ watch(
     const nonEmptyFolderKeySet = new Set(nonEmptyFolderKeys)
 
     if (knownFolderKeys.value.size === 0) {
-      // Expand folders that already have content; leave empty ones collapsed
-      // so Naive can resolve "inside" drops reliably.
-      expandedKeys.value = nonEmptyFolderKeys
-      knownFolderKeys.value = folderKeySet
-      return
+      // Restore persisted expansion (or stay collapsed). Never force-open all.
+      expandedKeys.value = expandedKeys.value
+        .map(String)
+        .filter((key) => nonEmptyFolderKeySet.has(key))
+    } else {
+      const retained = expandedKeys.value.map(String).filter((key) => folderKeySet.has(key))
+      // Auto-expand newly created non-empty folders so the new item is visible.
+      const discovered = nonEmptyFolderKeys.filter((key) => !knownFolderKeys.value.has(key))
+
+      const expanded = new Set<string>()
+      for (const key of retained) {
+        // Keep user-expanded non-empty folders. Collapse empty ones so edge
+        // drops are not remapped to the next sibling by Naive Tree.
+        if (nonEmptyFolderKeySet.has(key)) expanded.add(key)
+      }
+      for (const key of discovered) expanded.add(key)
+
+      expandedKeys.value = [...expanded]
     }
 
-    const retained = expandedKeys.value.map(String).filter((key) => folderKeySet.has(key))
-    const discovered = nonEmptyFolderKeys.filter((key) => !knownFolderKeys.value.has(key))
-
-    const expanded = new Set<string>()
-    for (const key of retained) {
-      // Keep user-expanded non-empty folders. Collapse empty ones so edge
-      // drops are not remapped to the next sibling by Naive Tree.
-      if (nonEmptyFolderKeySet.has(key)) expanded.add(key)
-    }
-    for (const key of discovered) expanded.add(key)
-
-    expandedKeys.value = [...expanded]
     knownFolderKeys.value = folderKeySet
+
+    // Search should reveal matches under collapsed folders without persisting.
+    if (isSearchActive.value) {
+      expandedKeys.value = collectFolderKeys(nodes)
+    }
   },
   { immediate: true },
 )
 
-watch([isSearchActive, treeData], ([searching, nodes]) => {
-  if (!searching) return
-  expandedKeys.value = collectFolderKeys(nodes)
+watch(isSearchActive, (searching, wasSearching) => {
+  if (searching && !wasSearching) {
+    expandedKeysBeforeSearch.value = [...expandedKeys.value]
+    expandedKeys.value = collectFolderKeys(treeData.value)
+    return
+  }
+  if (!searching && wasSearching && expandedKeysBeforeSearch.value) {
+    const nonEmpty = new Set(collectNonEmptyFolderKeys(treeData.value))
+    expandedKeys.value = expandedKeysBeforeSearch.value
+      .map(String)
+      .filter((key) => nonEmpty.has(key))
+    expandedKeysBeforeSearch.value = null
+  }
+})
+
+watch(expandedKeys, (keys) => {
+  if (!rootPath.value || isSearchActive.value) return
+  saveExpandedKeys(rootPath.value, keys)
 })
 
 const selectedKeys = computed(() => {
@@ -498,19 +554,36 @@ async function onRootDrop(event: DragEvent) {
   <div class="project-sidebar">
     <div class="project-sidebar__header">
       <span class="project-sidebar__title">
-        {{ hasProject ? name : 'Proyecto' }}
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-text strong>
+              {{ hasProject ? name : 'Proyecto' }}
+            </n-text>
+          </template>
+          {{ rootPath }}
+        </n-tooltip>
       </span>
       <n-space v-if="hasProject" :size="4">
-        <n-button size="tiny" quaternary @click="openCreate('folder')">
-          <template #icon>
-            <n-icon :component="FolderPlus" />
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-button size="tiny" quaternary @click="openCreate('folder')">
+              <template #icon>
+                <n-icon :component="FolderPlus" />
+              </template>
+            </n-button>
           </template>
-        </n-button>
-        <n-button size="tiny" quaternary @click="openCreate('request')">
-          <template #icon>
-            <n-icon :component="FileAlt" />
+          Crear carpeta
+        </n-tooltip>
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-button size="tiny" quaternary @click="openCreate('request')">
+              <template #icon>
+                <n-icon :component="FileAlt" />
+              </template>
+            </n-button>
           </template>
-        </n-button>
+          Crear petición
+        </n-tooltip>
       </n-space>
     </div>
 

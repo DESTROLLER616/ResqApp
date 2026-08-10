@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { NButton, NEmpty, NIcon, NInput, NModal, NSpace, NTooltip, useMessage } from 'naive-ui'
+import { NButton, NEmpty, NIcon, NSpace, NTooltip, useMessage } from 'naive-ui'
 import { FolderOpen, FolderPlus, Times } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
-import * as workspaceService from '@/services/workspace'
+import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
 import { useProjectStore } from '@/stores/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 
@@ -12,17 +11,7 @@ const projectStore = useProjectStore()
 const { recentProjects, isLoading } = storeToRefs(recentStore)
 const { rootPath } = storeToRefs(projectStore)
 const message = useMessage()
-
-const createModalOpen = ref(false)
-const createName = ref('')
-const createParentDir = ref<string | null>(null)
-const initModalOpen = ref(false)
-const initPath = ref<string | null>(null)
-const initName = ref('')
-
-onMounted(() => {
-  void recentStore.openLastIfAvailable()
-})
+const { openProject, createProject } = useProjectLifecycle()
 
 function truncatePath(path: string): string {
   if (path.length <= 36) return path
@@ -45,70 +34,6 @@ async function onRemoveRecent(path: string, event: MouseEvent) {
     message.error(e instanceof Error ? e.message : String(e))
   }
 }
-
-async function onOpenProject() {
-  try {
-    const path = await workspaceService.pickDirectory('Abrir proyecto')
-    if (!path) return
-
-    try {
-      await projectStore.openProject(path)
-      await recentStore.load()
-    } catch {
-      initPath.value = path
-      const parts = path.split(/[/\\]/).filter(Boolean)
-      initName.value = parts[parts.length - 1] ?? 'Project'
-      initModalOpen.value = true
-    }
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-  }
-}
-
-async function onCreateProject() {
-  try {
-    const parent = await workspaceService.pickDirectory('Carpeta padre del proyecto')
-    if (!parent) return
-    createParentDir.value = parent
-    createName.value = ''
-    createModalOpen.value = true
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-  }
-}
-
-async function confirmCreate(): Promise<boolean> {
-  if (!createParentDir.value) return false
-  const name = createName.value.trim()
-  if (!name) {
-    message.warning('El nombre no puede estar vacío')
-    return false
-  }
-  try {
-    await projectStore.createProject(createParentDir.value, name)
-    await recentStore.load()
-    createModalOpen.value = false
-    message.success('Proyecto creado')
-    return true
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-    return false
-  }
-}
-
-async function confirmInit(): Promise<boolean> {
-  if (!initPath.value) return false
-  try {
-    await projectStore.initProject(initPath.value, initName.value.trim() || undefined)
-    await recentStore.load()
-    initModalOpen.value = false
-    message.success('Proyecto inicializado')
-    return true
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-    return false
-  }
-}
 </script>
 
 <template>
@@ -119,13 +44,13 @@ async function confirmInit(): Promise<boolean> {
 
     <div class="recent-sidebar__actions">
       <n-space vertical :size="8" style="width: 100%">
-        <n-button block size="small" type="primary" @click="onOpenProject">
+        <n-button block size="small" type="primary" @click="openProject">
           <template #icon>
             <n-icon :component="FolderOpen" />
           </template>
           Abrir…
         </n-button>
-        <n-button block size="small" @click="onCreateProject">
+        <n-button block size="small" @click="createProject">
           <template #icon>
             <n-icon :component="FolderPlus" />
           </template>
@@ -169,39 +94,6 @@ async function confirmInit(): Promise<boolean> {
         </n-button>
       </button>
     </div>
-
-    <n-modal
-      v-model:show="createModalOpen"
-      preset="dialog"
-      title="Nuevo proyecto"
-      positive-text="Crear"
-      negative-text="Cancelar"
-      @positive-click="confirmCreate"
-    >
-      <n-space vertical>
-        <span class="recent-sidebar__hint"> Se creará en: {{ createParentDir }} </span>
-        <n-input
-          v-model:value="createName"
-          placeholder="Nombre del proyecto"
-          @keyup.enter="confirmCreate"
-        />
-      </n-space>
-    </n-modal>
-
-    <n-modal
-      v-model:show="initModalOpen"
-      preset="dialog"
-      title="Inicializar proyecto"
-      positive-text="Inicializar"
-      negative-text="Cancelar"
-      @positive-click="confirmInit"
-    >
-      <n-space vertical>
-        <span class="recent-sidebar__hint"> La carpeta no es un proyecto. ¿Inicializarla? </span>
-        <span class="recent-sidebar__hint">{{ initPath }}</span>
-        <n-input v-model:value="initName" placeholder="Nombre del proyecto" />
-      </n-space>
-    </n-modal>
   </div>
 </template>
 
@@ -298,11 +190,5 @@ async function confirmInit(): Promise<boolean> {
 
 .recent-sidebar__item:hover .recent-sidebar__item-remove {
   opacity: 1;
-}
-
-.recent-sidebar__hint {
-  font-size: 12px;
-  color: var(--app-muted);
-  word-break: break-all;
 }
 </style>

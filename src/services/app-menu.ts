@@ -6,6 +6,7 @@ import {
   Submenu,
 } from '@tauri-apps/api/menu'
 import type { RecentProject } from '@/types/project'
+import type { ThemeMode } from '@/types/ui'
 
 export interface AppMenuHandlers {
   onNewProject: () => void
@@ -15,6 +16,7 @@ export interface AppMenuHandlers {
   onRefresh: () => void
   onToggleProjectSidebar: () => void
   onToggleRecentSidebar: () => void
+  onSetThemeMode: (mode: ThemeMode) => void
 }
 
 export interface AppMenuState {
@@ -22,6 +24,7 @@ export interface AppMenuState {
   recentProjects: readonly RecentProject[]
   isProjectSidebarVisible: boolean
   isRecentSidebarVisible: boolean
+  themeMode: ThemeMode
 }
 
 function isMacOs(): boolean {
@@ -58,6 +61,33 @@ async function buildOpenRecentSubmenu(
           text: project.name,
           action: () => {
             onOpenRecent(project.path)
+          },
+        }),
+      ),
+    ),
+  })
+}
+
+async function buildThemeSubmenu(
+  themeMode: ThemeMode,
+  onSetThemeMode: (mode: ThemeMode) => void,
+): Promise<Submenu> {
+  const options: { id: string; text: string; mode: ThemeMode }[] = [
+    { id: 'theme-system', text: 'System', mode: 'system' },
+    { id: 'theme-light', text: 'Light', mode: 'light' },
+    { id: 'theme-dark', text: 'Dark', mode: 'dark' },
+  ]
+
+  return Submenu.new({
+    text: 'Theme',
+    items: await Promise.all(
+      options.map((option) =>
+        CheckMenuItem.new({
+          id: option.id,
+          text: option.text,
+          checked: themeMode === option.mode,
+          action: () => {
+            onSetThemeMode(option.mode)
           },
         }),
       ),
@@ -152,6 +182,8 @@ export async function installAppMenu(
           handlers.onToggleRecentSidebar()
         },
       }),
+      await separator(),
+      await buildThemeSubmenu(state.themeMode, handlers.onSetThemeMode),
       await separator(),
       await PredefinedMenuItem.new({ item: 'Fullscreen' }),
     ],

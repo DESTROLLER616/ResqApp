@@ -35,6 +35,14 @@ body {
   --app-muted: #6b7280;
 }
 
+html.dark {
+  --app-border: #303033;
+  --app-sidebar-bg: #18181c;
+  --app-surface: #101014;
+  --app-muted: #a1a1aa;
+  color-scheme: dark;
+}
+
 body.is-resizing-col,
 body.is-resizing-col * {
   cursor: col-resize !important;

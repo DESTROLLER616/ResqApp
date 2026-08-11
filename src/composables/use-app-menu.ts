@@ -14,7 +14,7 @@ export function useAppMenu(): void {
   const uiStore = useUiStore()
   const { hasProject } = storeToRefs(projectStore)
   const { recentProjects } = storeToRefs(recentStore)
-  const { isProjectSidebarVisible, isRecentSidebarVisible } = storeToRefs(uiStore)
+  const { isProjectSidebarVisible, isRecentSidebarVisible, themeMode } = storeToRefs(uiStore)
   const { openProject, createProject } = useProjectLifecycle()
 
   let rebuildToken = 0
@@ -29,6 +29,7 @@ export function useAppMenu(): void {
           recentProjects: recentProjects.value,
           isProjectSidebarVisible: isProjectSidebarVisible.value,
           isRecentSidebarVisible: isRecentSidebarVisible.value,
+          themeMode: themeMode.value,
         },
         {
           onNewProject: () => {
@@ -70,6 +71,9 @@ export function useAppMenu(): void {
           onToggleRecentSidebar: () => {
             uiStore.toggleRecentSidebar()
           },
+          onSetThemeMode: (mode) => {
+            uiStore.setThemeMode(mode)
+          },
         },
       )
     } catch (e) {
@@ -88,7 +92,7 @@ export function useAppMenu(): void {
   })
 
   watch(
-    [hasProject, recentProjects, isProjectSidebarVisible, isRecentSidebarVisible],
+    [hasProject, recentProjects, isProjectSidebarVisible, isRecentSidebarVisible, themeMode],
     () => {
       void rebuildMenu()
     },

@@ -55,7 +55,7 @@ function deleteHeader(id: string): void {
           <td>
             <n-input
               :value="header.key"
-              placeholder="Header name"
+              placeholder="Name"
               size="small"
               @update:value="(key) => updateHeader(header.id, { key })"
             />
@@ -63,7 +63,7 @@ function deleteHeader(id: string): void {
           <td>
             <n-input
               :value="header.value"
-              placeholder="Header value"
+              placeholder="Value"
               size="small"
               @update:value="(value) => updateHeader(header.id, { value })"
             />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref, useTemplateRef, VNodeChild, watch } from 'vue'
 import { NButton, NEmpty, NInput, NSelect, NTabPane, NTabs, NText, NIcon, NTooltip } from 'naive-ui'
 import type { SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
@@ -52,10 +52,34 @@ const isBodyDisabled = computed(() => {
 const urlDraft = ref('')
 let skipParamsUrlSync = false
 
+const METHOD_COLORS: Record<HttpMethod, string> = {
+  GET: '#10b981',
+  POST: '#3b82f6',
+  PUT: '#f59e0b',
+  PATCH: '#a855f7',
+  DELETE: '#ef4444',
+  HEAD: '#6b7280',
+  OPTIONS: '#6b7280',
+}
+
 const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
   label: String(method).charAt(0).toUpperCase() + String(method).slice(1),
   value: method,
 }))
+
+function renderMethodLabel(option: SelectOption): VNodeChild {
+  const method = option.value as HttpMethod
+  return h(
+    'span',
+    {
+      style: {
+        color: METHOD_COLORS[method],
+        fontWeight: 600,
+      },
+    },
+    String(option.label ?? method),
+  )
+}
 
 async function sendRequest() {
   const draft = projectStore.activeDraft
@@ -201,6 +225,7 @@ watch(
               :value="activeDraft.method"
               :options="methodOptions"
               :consistent-menu-width="false"
+              :render-label="renderMethodLabel"
               @update:value="updateMethod"
             />
             <n-input

@@ -15,7 +15,7 @@ import {
   useMessage,
 } from 'naive-ui'
 import type { DropdownOption, TreeDragInfo, TreeDropInfo, TreeOption, SelectOption } from 'naive-ui'
-import { FolderOpen, FolderPlus, FileAlt, TrashAlt, PenAlt } from '@vicons/fa'
+import { FolderOpen, FolderPlus, FileAlt, TrashAlt, PenAlt, Cog } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
 import { useProjectStore } from '@/stores/project'
@@ -583,6 +583,16 @@ async function onRootDrop(event: DragEvent) {
             </n-button>
           </template>
           Crear petición
+        </n-tooltip>
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-button size="tiny" quaternary>
+              <template #icon>
+                <n-icon :component="Cog" />
+              </template>
+            </n-button>
+          </template>
+          Configuración
         </n-tooltip>
       </n-space>
     </div>

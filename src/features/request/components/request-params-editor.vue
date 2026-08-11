@@ -55,7 +55,7 @@ function deleteParams(id: string): void {
           <td>
             <n-input
               :value="param.key"
-              placeholder="Param name"
+              placeholder="Name"
               size="small"
               @update:value="(key) => updateParam(param.id, { key })"
             />
@@ -63,7 +63,7 @@ function deleteParams(id: string): void {
           <td>
             <n-input
               :value="param.value"
-              placeholder="Param value"
+              placeholder="Value"
               size="small"
               @update:value="(value) => updateParam(param.id, { value })"
             />

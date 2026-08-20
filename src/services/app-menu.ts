@@ -17,6 +17,7 @@ export interface AppMenuHandlers {
   onToggleProjectSidebar: () => void
   onToggleRecentSidebar: () => void
   onSetThemeMode: (mode: ThemeMode) => void
+  onSetLocale: (locale: string) => void
 }
 
 export interface AppMenuState {
@@ -25,6 +26,9 @@ export interface AppMenuState {
   isProjectSidebarVisible: boolean
   isRecentSidebarVisible: boolean
   themeMode: ThemeMode
+  locale: string
+  availableLocales: readonly string[]
+  languageMenuLabel: string
 }
 
 function isMacOs(): boolean {
@@ -88,6 +92,39 @@ async function buildThemeSubmenu(
           checked: themeMode === option.mode,
           action: () => {
             onSetThemeMode(option.mode)
+          },
+        }),
+      ),
+    ),
+  })
+}
+
+function languageLabel(locale: string): string {
+  try {
+    const name = new Intl.DisplayNames([locale], { type: 'language' }).of(locale)
+    if (!name) return locale
+    return name.charAt(0).toUpperCase() + name.slice(1)
+  } catch {
+    return locale
+  }
+}
+
+async function buildLanguageSubmenu(
+  locale: string,
+  availableLocales: readonly string[],
+  label: string,
+  onSetLocale: (nextLocale: string) => void,
+): Promise<Submenu> {
+  return Submenu.new({
+    text: label,
+    items: await Promise.all(
+      availableLocales.map((code) =>
+        CheckMenuItem.new({
+          id: `locale-${code}`,
+          text: languageLabel(code),
+          checked: locale === code,
+          action: () => {
+            onSetLocale(code)
           },
         }),
       ),
@@ -184,6 +221,12 @@ export async function installAppMenu(
       }),
       await separator(),
       await buildThemeSubmenu(state.themeMode, handlers.onSetThemeMode),
+      await buildLanguageSubmenu(
+        state.locale,
+        state.availableLocales,
+        state.languageMenuLabel,
+        handlers.onSetLocale,
+      ),
       await separator(),
       await PredefinedMenuItem.new({ item: 'Fullscreen' }),
     ],

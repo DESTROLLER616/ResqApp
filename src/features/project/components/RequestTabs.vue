@@ -3,10 +3,12 @@ import { NEmpty, NTabPane, NTabs } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useI18n } from 'vue-i18n'
 
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 const { openTabs, activeRequestPath } = storeToRefs(workspaceStore)
+const { t } = useI18n()
 
 async function onUpdateValue(value: string) {
   workspaceStore.setActiveRequest(value)
@@ -48,7 +50,7 @@ function onClose(name: string | number) {
     </n-tabs>
 
     <div v-else class="request-tabs__empty">
-      <n-empty description="Selecciona una petición del proyecto" size="small" />
+      <n-empty :description="t('project.tabs.empty')" size="small" />
     </div>
   </div>
 </template>
@@ -80,7 +82,7 @@ function onClose(name: string | number) {
 
 .request-tabs__empty {
   flex: 1;
-  display: flex;
+  display: grid;
   align-items: center;
   padding: 4px 8px 10px;
 }

@@ -22,6 +22,9 @@ import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { HTTP_METHODS, type HttpMethod } from '@/types/http'
 import type { ProjectTreeNode } from '@/types/project'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface ProjectTreeOption extends TreeOption {
   key: string
@@ -303,17 +306,17 @@ async function confirmCreate(): Promise<boolean> {
   const nameValue = createName.value.trim()
   const httpMethodValue = createHttpMethod.value
   if (!nameValue) {
-    message.warning('El nombre no puede estar vacío')
+    message.warning(t('validation.nameRequired'))
     return false
   }
 
   try {
     if (createModal.value.type === 'folder') {
       await projectStore.createFolder(createModal.value.parentRelative, nameValue)
-      message.success('Carpeta creada')
+      message.success(t('project.toast.folderCreated'))
     } else {
       await projectStore.createRequest(createModal.value.parentRelative, nameValue, httpMethodValue)
-      message.success('Petición creada')
+      message.success(t('project.toast.requestCreated'))
     }
     createModal.value = null
     return true
@@ -331,12 +334,12 @@ const dropdownOptions = computed<DropdownOption[]>(() => {
   if (option.kind === 'folder') {
     items.push(
       {
-        label: 'Nueva carpeta',
+        label: t('project.actions.newFolder'),
         key: 'new-folder',
         icon: () => h(NIcon, { component: FolderPlus }),
       },
       {
-        label: 'Nueva petición',
+        label: t('project.actions.newRequest'),
         key: 'new-request',
         icon: () => h(NIcon, { component: FileAlt }),
       },
@@ -344,12 +347,12 @@ const dropdownOptions = computed<DropdownOption[]>(() => {
   }
   items.push(
     {
-      label: 'Cambiar nombre',
+      label: t('common.rename'),
       key: 'rename',
       icon: () => h(NIcon, { component: PenAlt }),
     },
     {
-      label: 'Eliminar',
+      label: t('common.delete'),
       key: 'delete',
       icon: () => h(NIcon, { component: TrashAlt }),
     },
@@ -369,13 +372,13 @@ async function confirmRename(): Promise<boolean> {
   if (!renameModal.value) return false
   const nameValue = renameName.value.trim()
   if (!nameValue) {
-    message.warning('El nombre no puede estar vacío')
+    message.warning(t('validation.nameRequired'))
     return false
   }
 
   try {
     await projectStore.renameEntry(renameModal.value.relativePath, nameValue)
-    message.success('Nombre actualizado')
+    message.success(t('project.toast.renamed'))
     renameModal.value = null
     return true
   } catch (e) {
@@ -413,7 +416,7 @@ async function onDropdownSelect(key: string | number) {
   if (key === 'delete') {
     try {
       await projectStore.deleteEntry(option.relativePath)
-      message.success('Eliminado')
+      message.success(t('project.toast.deleted'))
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))
     }
@@ -495,8 +498,8 @@ async function moveToParent(fromRelative: string, toParentRelative: string): Pro
     expandFolders(toParentRelative)
     message.success(
       toParentRelative
-        ? `Movido a ${toParentRelative}/${baseName}`
-        : `Movido a la raíz: ${baseName}`,
+        ? t('project.toast.movedTo', { path: `${toParentRelative}/${baseName}` })
+        : t('project.toast.movedToRoot', { name: baseName }),
     )
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
@@ -513,7 +516,7 @@ async function onDrop({ node, dragNode }: TreeDropInfo) {
   const toParent = resolveDropParent(target)
 
   if (isInvalidFolderTarget(drag, toParent)) {
-    message.warning('No se puede mover una carpeta dentro de sí misma')
+    message.warning(t('project.dnd.cannotMoveIntoSelf'))
     return
   }
 
@@ -557,7 +560,7 @@ async function onRootDrop(event: DragEvent) {
         <n-tooltip trigger="hover" placement="bottom">
           <template #trigger>
             <n-text strong>
-              {{ hasProject ? name : 'Proyecto' }}
+              {{ hasProject ? name : t('project.untitled') }}
             </n-text>
           </template>
           {{ rootPath }}
@@ -572,7 +575,7 @@ async function onRootDrop(event: DragEvent) {
               </template>
             </n-button>
           </template>
-          Crear carpeta
+          {{ t('project.actions.newFolder') }}
         </n-tooltip>
         <n-tooltip trigger="hover" placement="bottom">
           <template #trigger>
@@ -582,7 +585,7 @@ async function onRootDrop(event: DragEvent) {
               </template>
             </n-button>
           </template>
-          Crear petición
+          {{ t('project.actions.newRequest') }}
         </n-tooltip>
         <n-tooltip trigger="hover" placement="bottom">
           <template #trigger>
@@ -592,14 +595,14 @@ async function onRootDrop(event: DragEvent) {
               </template>
             </n-button>
           </template>
-          Configuración
+          {{ t('project.settings') }}
         </n-tooltip>
       </n-space>
     </div>
 
     <template v-if="hasProject">
       <div class="project-sidebar__search">
-        <n-input v-model:value="search" clearable placeholder="Buscar…" size="small" />
+        <n-input v-model:value="search" clearable :placeholder="t('common.search')" size="small" />
       </div>
 
       <div class="project-sidebar__tree" @click="closeContextMenu">
@@ -624,7 +627,7 @@ async function onRootDrop(event: DragEvent) {
           @dragend="onDragEnd"
           @drop="onDrop"
         />
-        <n-empty v-else description="Sin carpetas ni peticiones" size="small" />
+        <n-empty v-else :description="t('project.empty.tree')" size="small" />
 
         <div
           v-if="treeData.length > 0 && canDrag"
@@ -634,13 +637,13 @@ async function onRootDrop(event: DragEvent) {
           @dragleave="onRootDragLeave"
           @drop="onRootDrop"
         >
-          Soltar aquí para mover a la raíz
+          {{ t('project.dnd.dropToRoot') }}
         </div>
       </div>
     </template>
 
     <div v-else class="project-sidebar__empty">
-      <n-empty description="Abre o crea un proyecto desde la barra derecha" size="small" />
+      <n-empty :description="t('project.empty.workspace')" size="small" />
     </div>
 
     <n-dropdown
@@ -657,9 +660,13 @@ async function onRootDrop(event: DragEvent) {
     <n-modal
       :show="createModal !== null"
       preset="dialog"
-      :title="createModal?.type === 'folder' ? 'Nueva carpeta' : 'Nueva petición'"
-      positive-text="Crear"
-      negative-text="Cancelar"
+      :title="
+        createModal?.type === 'folder'
+          ? t('project.actions.newFolder')
+          : t('project.actions.newRequest')
+      "
+      :positive-text="t('common.create')"
+      :negative-text="t('common.cancel')"
       @positive-click="confirmCreate"
       @negative-click="createModal = null"
       @close="createModal = null"
@@ -668,7 +675,11 @@ async function onRootDrop(event: DragEvent) {
       <n-space vertical size="medium">
         <n-input
           v-model:value="createName"
-          :placeholder="createModal?.type === 'folder' ? 'Nombre de carpeta' : 'Nombre de petición'"
+          :placeholder="
+            createModal?.type === 'folder'
+              ? t('project.modal.folderName')
+              : t('project.modal.requestName')
+          "
           @keyup.enter="confirmCreate"
         />
 
@@ -683,9 +694,9 @@ async function onRootDrop(event: DragEvent) {
     <n-modal
       :show="renameModal !== null"
       preset="dialog"
-      title="Cambiar nombre"
-      positive-text="Guardar"
-      negative-text="Cancelar"
+      :title="t('common.rename')"
+      :positive-text="t('common.save')"
+      :negative-text="t('common.cancel')"
       @positive-click="confirmRename"
       @negative-click="renameModal = null"
       @close="renameModal = null"
@@ -693,7 +704,11 @@ async function onRootDrop(event: DragEvent) {
     >
       <n-input
         v-model:value="renameName"
-        :placeholder="renameModal?.kind === 'folder' ? 'Nombre de carpeta' : 'Nombre de petición'"
+        :placeholder="
+          renameModal?.kind === 'folder'
+            ? t('project.modal.folderName')
+            : t('project.modal.requestName')
+        "
         @keyup.enter="confirmRename"
       />
     </n-modal>

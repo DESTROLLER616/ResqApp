@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
 import { useProjectStore } from '@/stores/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
+import { useI18n } from 'vue-i18n'
 
 const recentStore = useRecentProjectsStore()
 const projectStore = useProjectStore()
@@ -12,6 +13,7 @@ const { recentProjects, isLoading } = storeToRefs(recentStore)
 const { rootPath } = storeToRefs(projectStore)
 const message = useMessage()
 const { openProject, createProject } = useProjectLifecycle()
+const { t } = useI18n()
 
 function truncatePath(path: string): string {
   if (path.length <= 36) return path
@@ -39,7 +41,7 @@ async function onRemoveRecent(path: string, event: MouseEvent) {
 <template>
   <div class="recent-sidebar">
     <div class="recent-sidebar__header">
-      <span class="recent-sidebar__title">Proyectos</span>
+      <span class="recent-sidebar__title">{{ t('project.recent.title') }}</span>
     </div>
 
     <div class="recent-sidebar__actions">
@@ -48,13 +50,13 @@ async function onRemoveRecent(path: string, event: MouseEvent) {
           <template #icon>
             <n-icon :component="FolderOpen" />
           </template>
-          Abrir…
+          {{ t('project.recent.open') }}
         </n-button>
         <n-button block size="small" @click="createProject">
           <template #icon>
             <n-icon :component="FolderPlus" />
           </template>
-          Nuevo…
+          {{ t('project.recent.new') }}
         </n-button>
       </n-space>
     </div>
@@ -62,7 +64,7 @@ async function onRemoveRecent(path: string, event: MouseEvent) {
     <div class="recent-sidebar__list">
       <n-empty
         v-if="!isLoading && recentProjects.length === 0"
-        description="Sin proyectos recientes"
+        :description="t('project.recent.empty')"
         size="small"
       />
       <button

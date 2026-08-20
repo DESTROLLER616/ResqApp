@@ -1,7 +1,9 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
 import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
+import { availableLocales, setLocale } from '@/i18n'
 import { installAppMenu } from '@/services/app-menu'
 import { useProjectStore } from '@/stores/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
@@ -15,6 +17,7 @@ export function useAppMenu(): void {
   const { hasProject } = storeToRefs(projectStore)
   const { recentProjects } = storeToRefs(recentStore)
   const { isProjectSidebarVisible, isRecentSidebarVisible, themeMode } = storeToRefs(uiStore)
+  const { locale, t } = useI18n()
   const { openProject, createProject } = useProjectLifecycle()
 
   let rebuildToken = 0
@@ -30,6 +33,9 @@ export function useAppMenu(): void {
           isProjectSidebarVisible: isProjectSidebarVisible.value,
           isRecentSidebarVisible: isRecentSidebarVisible.value,
           themeMode: themeMode.value,
+          locale: locale.value,
+          availableLocales,
+          languageMenuLabel: t('menu.language'),
         },
         {
           onNewProject: () => {
@@ -74,6 +80,9 @@ export function useAppMenu(): void {
           onSetThemeMode: (mode) => {
             uiStore.setThemeMode(mode)
           },
+          onSetLocale: (nextLocale) => {
+            setLocale(nextLocale)
+          },
         },
       )
     } catch (e) {
@@ -92,7 +101,14 @@ export function useAppMenu(): void {
   })
 
   watch(
-    [hasProject, recentProjects, isProjectSidebarVisible, isRecentSidebarVisible, themeMode],
+    [
+      hasProject,
+      recentProjects,
+      isProjectSidebarVisible,
+      isRecentSidebarVisible,
+      themeMode,
+      locale,
+    ],
     () => {
       void rebuildMenu()
     },

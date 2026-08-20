@@ -1,0 +1,68 @@
+{
+  "common": {
+    "save": "Guardar",
+    "init": "Inicializar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "delete": "Borrar",
+    "rename": "Cambiar nombre",
+    "search": "Buscar..."
+  },
+  "validation": {
+    "required": "El campo {field} no puede estar vacío",
+    "nameRequired": "El nombre no puede estar vacío"
+  },
+  "project": {
+    "untitled": "Proyecto",
+    "settings": "Configuración",
+    "actions": {
+      "newFolder": "Nueva carpeta",
+      "newRequest": "Nueva petición"
+    },
+    "empty": {
+      "tree": "Sin carpetas ni peticiones",
+      "workspace": "Abre o crea un proyecto desde la barra derecha"
+    },
+    "modal": {
+      "new": "Nuevo proyecto",
+      "name": "Nombre del proyecto",
+      "folderName": "Nombre de carpeta",
+      "requestName": "Nombre de petición",
+      "initProject": "Inicializar proyecto",
+      "willCreateFolder": "Se creara en {path}",
+      "initFolderToProject": "La carpeta no es un proyecto. ¿Inicializarla?"
+    },
+    "toast": {
+      "created": "Proyecto creado",
+      "folderCreated": "Carpeta creada",
+      "requestCreated": "Petición creada",
+      "renamed": "Nombre actualizado",
+      "deleted": "Eliminado",
+      "movedTo": "Movido a {path}",
+      "movedToRoot": "Movido a la raíz: {name}"
+    },
+    "dnd": {
+      "dropToRoot": "Soltar aquí para mover a la raíz",
+      "cannotMoveIntoSelf": "No se puede mover una carpeta dentro de sí misma"
+    },
+    "recent": {
+      "title": "Proyectos",
+      "open": "Abrir...",
+      "new": "Nuevo...",
+      "empty": "Sin proyectos recientes"
+    },
+    "tabs": {
+      "empty": "Selecciona una petición del proyecto"
+    }
+  },
+  "request": {
+    "params": "Parámetros",
+    "headers": "Cabeceras",
+    "emptyResponse": "Envía una petición para ver la respuesta"
+  },
+  "menu": {
+    "file": "Archivo",
+    "openRecent": "Abrir reciente",
+    "language": "Idioma"
+  }
+}

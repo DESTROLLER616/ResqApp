@@ -93,42 +93,4 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
   <ProjectLifecycleModals />
 </template>
 
-<style scoped>
-.app-shell {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--app-surface);
-}
-
-.app-shell__sider {
-  flex: 0 0 auto;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-  background: var(--app-sidebar-bg);
-}
-
-.app-shell__main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-
-.app-shell__panel {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.app-shell__recent {
-  flex: 0 0 auto;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-}
-</style>
+<style scoped src="@/styles/app-shell-content.css"></style>

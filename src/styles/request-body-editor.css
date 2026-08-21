@@ -1,0 +1,9 @@
+.body-editor {
+  height: 100%;
+}
+
+.body-editor :deep(.n-input),
+.body-editor :deep(.n-input-wrapper),
+.body-editor :deep(textarea) {
+  height: 100% !important;
+}

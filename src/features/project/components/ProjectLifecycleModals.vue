@@ -54,10 +54,4 @@ const { t } = useI18n()
   </n-modal>
 </template>
 
-<style scoped>
-.lifecycle-modals__hint {
-  font-size: 12px;
-  color: var(--app-muted);
-  word-break: break-all;
-}
-</style>
+<style scoped src="@/styles/project-lifecycle-modals.css"></style>

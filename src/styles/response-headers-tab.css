@@ -1,0 +1,10 @@
+.response-headers-tab {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.response-headers-tab__row {
+  margin-bottom: 6px;
+  word-break: break-word;
+}

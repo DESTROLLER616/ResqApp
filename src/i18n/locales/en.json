@@ -6,7 +6,12 @@
     "create": "Create",
     "delete": "Delete",
     "rename": "Rename",
-    "search": "Search..."
+    "search": "Search...",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "validation": {
     "required": "The {field} field cannot be empty",
@@ -83,8 +88,24 @@
     }
   },
   "menu": {
+    "app": "Application",
     "file": "File",
+    "edit": "Edit",
+    "view": "View",
+    "newProject": "New project...",
+    "openProject": "Open project…",
     "openRecent": "Open recent",
-    "language": "Language"
+    "noRecentProjects": "No recent projects",
+    "refreshProject": "Refresh project",
+    "projectSidebar": "Project sidebar",
+    "recentProjects": "Recent projects",
+    "theme": "Theme",
+    "language": "Language",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select all"
   }
 }

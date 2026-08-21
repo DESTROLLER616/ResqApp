@@ -6,7 +6,12 @@
     "create": "Crear",
     "delete": "Borrar",
     "rename": "Cambiar nombre",
-    "search": "Buscar..."
+    "search": "Buscar...",
+    "theme": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    }
   },
   "validation": {
     "required": "El campo {field} no puede estar vacío",
@@ -83,8 +88,24 @@
     }
   },
   "menu": {
+    "app": "Aplicación",
     "file": "Archivo",
+    "edit": "Editar",
+    "view": "Ver",
+    "newProject": "Nuevo proyecto...",
+    "openProject": "Abrir proyecto…",
     "openRecent": "Abrir reciente",
-    "language": "Idioma"
+    "noRecentProjects": "Ningún proyecto reciente",
+    "refreshProject": "Actualizar proyecto",
+    "projectSidebar": "Barra del proyecto",
+    "recentProjects": "Proyectos recientes",
+    "theme": "Tema",
+    "language": "Idioma",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "cut": "Cortar",
+    "copy": "Copiar",
+    "paste": "Pegar",
+    "selectAll": "Seleccionar todo"
   }
 }

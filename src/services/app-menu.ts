@@ -1,12 +1,9 @@
-import {
-  CheckMenuItem,
-  Menu,
-  MenuItem,
-  PredefinedMenuItem,
-  Submenu,
-} from '@tauri-apps/api/menu'
+import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from '@tauri-apps/api/menu'
 import type { RecentProject } from '@/types/project'
 import type { ThemeMode } from '@/types/ui'
+import { i18n } from '@/i18n'
+
+const { t } = i18n.global
 
 export interface AppMenuHandlers {
   onNewProject: () => void
@@ -28,7 +25,6 @@ export interface AppMenuState {
   themeMode: ThemeMode
   locale: string
   availableLocales: readonly string[]
-  languageMenuLabel: string
 }
 
 function isMacOs(): boolean {
@@ -45,11 +41,11 @@ async function buildOpenRecentSubmenu(
 ): Promise<Submenu> {
   if (recentProjects.length === 0) {
     return Submenu.new({
-      text: 'Open Recent',
+      text: t('menu.openRecent'),
       items: [
         await MenuItem.new({
           id: 'open-recent-empty',
-          text: 'No Recent Projects',
+          text: t('menu.noRecentProjects'),
           enabled: false,
         }),
       ],
@@ -57,7 +53,7 @@ async function buildOpenRecentSubmenu(
   }
 
   return Submenu.new({
-    text: 'Open Recent',
+    text: t('menu.openRecent'),
     items: await Promise.all(
       recentProjects.map((project, index) =>
         MenuItem.new({
@@ -77,13 +73,13 @@ async function buildThemeSubmenu(
   onSetThemeMode: (mode: ThemeMode) => void,
 ): Promise<Submenu> {
   const options: { id: string; text: string; mode: ThemeMode }[] = [
-    { id: 'theme-system', text: 'System', mode: 'system' },
-    { id: 'theme-light', text: 'Light', mode: 'light' },
-    { id: 'theme-dark', text: 'Dark', mode: 'dark' },
+    { id: 'theme-system', text: t('common.theme.system'), mode: 'system' },
+    { id: 'theme-light', text: t('common.theme.light'), mode: 'light' },
+    { id: 'theme-dark', text: t('common.theme.dark'), mode: 'dark' },
   ]
 
   return Submenu.new({
-    text: 'Theme',
+    text: t('menu.theme'),
     items: await Promise.all(
       options.map((option) =>
         CheckMenuItem.new({
@@ -112,11 +108,10 @@ function languageLabel(locale: string): string {
 async function buildLanguageSubmenu(
   locale: string,
   availableLocales: readonly string[],
-  label: string,
   onSetLocale: (nextLocale: string) => void,
 ): Promise<Submenu> {
   return Submenu.new({
-    text: label,
+    text: t('menu.language'),
     items: await Promise.all(
       availableLocales.map((code) =>
         CheckMenuItem.new({
@@ -141,7 +136,7 @@ export async function installAppMenu(
   const fileItems = [
     await MenuItem.new({
       id: 'new-project',
-      text: 'New Project…',
+      text: t('menu.newProject'),
       accelerator: 'CmdOrCtrl+Shift+N',
       action: () => {
         handlers.onNewProject()
@@ -149,7 +144,7 @@ export async function installAppMenu(
     }),
     await MenuItem.new({
       id: 'open-project',
-      text: 'Open Project…',
+      text: t('menu.openProject'),
       accelerator: 'CmdOrCtrl+O',
       action: () => {
         handlers.onOpenProject()
@@ -159,7 +154,7 @@ export async function installAppMenu(
     await separator(),
     await MenuItem.new({
       id: 'save',
-      text: 'Save',
+      text: t('common.save'),
       accelerator: 'CmdOrCtrl+S',
       enabled: state.hasProject,
       action: () => {
@@ -168,7 +163,7 @@ export async function installAppMenu(
     }),
     await MenuItem.new({
       id: 'refresh-project',
-      text: 'Refresh Project',
+      text: t('menu.refreshProject'),
       accelerator: 'CmdOrCtrl+R',
       enabled: state.hasProject,
       action: () => {
@@ -182,29 +177,29 @@ export async function installAppMenu(
   }
 
   const fileSubmenu = await Submenu.new({
-    text: 'File',
+    text: t('menu.file'),
     items: fileItems,
   })
 
   const editSubmenu = await Submenu.new({
-    text: 'Edit',
+    text: t('menu.edit'),
     items: [
-      await PredefinedMenuItem.new({ item: 'Undo' }),
-      await PredefinedMenuItem.new({ item: 'Redo' }),
+      await PredefinedMenuItem.new({ item: 'Undo', text: t('menu.undo') }),
+      await PredefinedMenuItem.new({ item: 'Redo', text: t('menu.redo') }),
       await separator(),
-      await PredefinedMenuItem.new({ item: 'Cut' }),
-      await PredefinedMenuItem.new({ item: 'Copy' }),
-      await PredefinedMenuItem.new({ item: 'Paste' }),
-      await PredefinedMenuItem.new({ item: 'SelectAll' }),
+      await PredefinedMenuItem.new({ item: 'Cut', text: t('menu.cut') }),
+      await PredefinedMenuItem.new({ item: 'Copy', text: t('menu.copy') }),
+      await PredefinedMenuItem.new({ item: 'Paste', text: t('menu.paste') }),
+      await PredefinedMenuItem.new({ item: 'SelectAll', text: t('menu.selectAll') }),
     ],
   })
 
   const viewSubmenu = await Submenu.new({
-    text: 'View',
+    text: t('menu.view'),
     items: [
       await CheckMenuItem.new({
         id: 'toggle-project-sidebar',
-        text: 'Project Sidebar',
+        text: t('menu.projectSidebar'),
         checked: state.isProjectSidebarVisible,
         accelerator: '',
         action: () => {
@@ -213,7 +208,7 @@ export async function installAppMenu(
       }),
       await CheckMenuItem.new({
         id: 'toggle-recent-sidebar',
-        text: 'Recent Projects',
+        text: t('menu.recentProjects'),
         checked: state.isRecentSidebarVisible,
         action: () => {
           handlers.onToggleRecentSidebar()
@@ -221,12 +216,7 @@ export async function installAppMenu(
       }),
       await separator(),
       await buildThemeSubmenu(state.themeMode, handlers.onSetThemeMode),
-      await buildLanguageSubmenu(
-        state.locale,
-        state.availableLocales,
-        state.languageMenuLabel,
-        handlers.onSetLocale,
-      ),
+      await buildLanguageSubmenu(state.locale, state.availableLocales, handlers.onSetLocale),
       await separator(),
       await PredefinedMenuItem.new({ item: 'Fullscreen' }),
     ],
@@ -236,7 +226,7 @@ export async function installAppMenu(
 
   if (macOs) {
     const aboutSubmenu = await Submenu.new({
-      text: 'App',
+      text: t('menu.app'),
       items: [await PredefinedMenuItem.new({ item: 'Quit' })],
     })
     menuItems.unshift(aboutSubmenu)

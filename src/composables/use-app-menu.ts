@@ -17,7 +17,7 @@ export function useAppMenu(): void {
   const { hasProject } = storeToRefs(projectStore)
   const { recentProjects } = storeToRefs(recentStore)
   const { isProjectSidebarVisible, isRecentSidebarVisible, themeMode } = storeToRefs(uiStore)
-  const { locale, t } = useI18n()
+  const { locale } = useI18n()
   const { openProject, createProject } = useProjectLifecycle()
 
   let rebuildToken = 0
@@ -35,7 +35,6 @@ export function useAppMenu(): void {
           themeMode: themeMode.value,
           locale: locale.value,
           availableLocales,
-          languageMenuLabel: t('menu.language'),
         },
         {
           onNewProject: () => {

@@ -58,7 +58,29 @@
   "request": {
     "params": "Parámetros",
     "headers": "Cabeceras",
-    "emptyResponse": "Envía una petición para ver la respuesta"
+    "body": "Cuerpo",
+    "response": "Respuesta",
+    "actions": {
+      "send": "Enviar petición",
+      "addParameter": "Agregar nuevo parámetro",
+      "addHeader": "Agregar nueva cabecera"
+    },
+    "empty": {
+      "selectRequest": "Selecciona una petición del proyecto",
+      "openProject": "Abre o crea un proyecto para empezar",
+      "response": "Envía una petición para ver la respuesta",
+      "body": "Sin cuerpo en la respuesta",
+      "headers": "Sin cabeceras en la respuesta"
+    },
+    "error": {
+      "sendFailed": "No se pudo enviar la petición"
+    },
+    "table": {
+      "name": "Nombre",
+      "value": "Valor",
+      "active": "Activo",
+      "actions": "Acciones"
+    }
   },
   "menu": {
     "file": "Archivo",

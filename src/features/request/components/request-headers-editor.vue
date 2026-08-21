@@ -3,12 +3,14 @@ import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import type { HttpHeader } from '@/types/http'
 import { Plus, TrashAlt } from '@vicons/fa'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   headers: HttpHeader[]
 }>()
 
 const projectStore = useProjectStore()
+const { t } = useI18n()
 
 function updateHeader(
   headerId: string,
@@ -44,10 +46,10 @@ function deleteHeader(id: string): void {
     <n-table striped size="small" class="headers-editor__table">
       <thead>
         <tr>
-          <th style="width: 25%">Name</th>
-          <th style="width: 25%">Value</th>
-          <th style="width: 25%; text-align: center">Active</th>
-          <th style="width: 25%; text-align: center">Acciones</th>
+          <th style="width: 25%">{{ t('request.table.name') }}</th>
+          <th style="width: 25%">{{ t('request.table.value') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.active') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -55,7 +57,7 @@ function deleteHeader(id: string): void {
           <td>
             <n-input
               :value="header.key"
-              placeholder="Name"
+              :placeholder="t('request.table.name')"
               size="small"
               @update:value="(key) => updateHeader(header.id, { key })"
             />
@@ -63,7 +65,7 @@ function deleteHeader(id: string): void {
           <td>
             <n-input
               :value="header.value"
-              placeholder="Value"
+              :placeholder="t('request.table.value')"
               size="small"
               @update:value="(value) => updateHeader(header.id, { value })"
             />
@@ -93,7 +95,7 @@ function deleteHeader(id: string): void {
             </template>
           </n-button>
         </template>
-        Agregar nuevo parámetro
+        {{ t('request.actions.addHeader') }}
       </n-tooltip>
     </div>
   </div>

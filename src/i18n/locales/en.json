@@ -58,7 +58,29 @@
   "request": {
     "params": "Parameters",
     "headers": "Headers",
-    "emptyResponse": "Send a request to see the response"
+    "body": "Body",
+    "response": "Response",
+    "actions": {
+      "send": "Send request",
+      "addParameter": "Add new parameter",
+      "addHeader": "Add new header"
+    },
+    "empty": {
+      "selectRequest": "Select a request from the project",
+      "openProject": "Open or create a project to get started",
+      "response": "Send a request to see the response",
+      "body": "No body in the response",
+      "headers": "No headers in the response"
+    },
+    "error": {
+      "sendFailed": "Could not send the request"
+    },
+    "table": {
+      "name": "Name",
+      "value": "Value",
+      "active": "Active",
+      "actions": "Actions"
+    }
   },
   "menu": {
     "file": "File",

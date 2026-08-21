@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { i18n } from '@/i18n'
 import * as workspaceService from '@/services/workspace'
 import type { HttpMethod, RequestDraft } from '@/types/http'
 import type { OpenedProject, ProjectTreeNode } from '@/types/project'
@@ -127,7 +128,7 @@ export const useProjectStore = defineStore('project', () => {
     httpMethod: HttpMethod,
   ): Promise<string> {
     if (!rootPath.value) {
-      throw new Error('No project open')
+      throw new Error(i18n.global.t('errors.noProjectOpen'))
     }
     const project = await workspaceService.createRequest(
       rootPath.value,
@@ -153,12 +154,12 @@ export const useProjectStore = defineStore('project', () => {
 
   async function renameEntry(relativePath: string, newName: string): Promise<string> {
     if (!rootPath.value) {
-      throw new Error('No project open')
+      throw new Error(i18n.global.t('errors.noProjectOpen'))
     }
 
     const trimmed = newName.trim()
     if (!trimmed) {
-      throw new Error('El nombre no puede estar vacío')
+      throw new Error(i18n.global.t('validation.nameRequired'))
     }
 
     await flushSave()
@@ -218,14 +219,14 @@ export const useProjectStore = defineStore('project', () => {
 
   async function moveEntry(fromRelative: string, toParentRelative: string): Promise<string> {
     if (!rootPath.value) {
-      throw new Error('No project open')
+      throw new Error(i18n.global.t('errors.noProjectOpen'))
     }
 
     await flushSave()
 
     const baseName = fromRelative.split('/').pop()
     if (!baseName) {
-      throw new Error('Invalid source path')
+      throw new Error(i18n.global.t('errors.invalidSourcePath'))
     }
     const newRelative = toParentRelative ? `${toParentRelative}/${baseName}` : baseName
 

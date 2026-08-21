@@ -37,8 +37,13 @@
       "willCreateFolder": "It will be created in {path}",
       "initFolderToProject": "The folder is not a project. Initialize it?"
     },
+    "dialog": {
+      "openProject": "Open project",
+      "createParentFolder": "Project parent folder"
+    },
     "toast": {
       "created": "Project created",
+      "initialized": "Project initialized",
       "folderCreated": "Folder created",
       "requestCreated": "Request created",
       "renamed": "Name updated",
@@ -86,6 +91,10 @@
       "active": "Active",
       "actions": "Actions"
     }
+  },
+  "errors": {
+    "noProjectOpen": "No project open",
+    "invalidSourcePath": "Invalid source path"
   },
   "menu": {
     "app": "Application",

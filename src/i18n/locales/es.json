@@ -37,8 +37,13 @@
       "willCreateFolder": "Se creara en {path}",
       "initFolderToProject": "La carpeta no es un proyecto. ¿Inicializarla?"
     },
+    "dialog": {
+      "openProject": "Abrir proyecto",
+      "createParentFolder": "Carpeta padre del proyecto"
+    },
     "toast": {
       "created": "Proyecto creado",
+      "initialized": "Proyecto inicializado",
       "folderCreated": "Carpeta creada",
       "requestCreated": "Petición creada",
       "renamed": "Nombre actualizado",
@@ -86,6 +91,10 @@
       "active": "Activo",
       "actions": "Acciones"
     }
+  },
+  "errors": {
+    "noProjectOpen": "No hay ningún proyecto abierto",
+    "invalidSourcePath": "Ruta de origen no válida"
   },
   "menu": {
     "app": "Aplicación",

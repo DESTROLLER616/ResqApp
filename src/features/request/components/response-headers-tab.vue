@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { NEmpty } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   responseHeaders: Record<string, string>
@@ -11,7 +14,7 @@ const headerEntries = computed(() => Object.entries(props.responseHeaders))
 
 <template>
   <div v-if="headerEntries.length === 0">
-    <n-empty description="Sin headers en la respuesta" size="small" />
+    <n-empty :description="t('request.empty.headers')" size="small" />
   </div>
 
   <div v-else class="response-headers-tab">

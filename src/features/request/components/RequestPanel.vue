@@ -16,6 +16,7 @@ import makeRequest from '../make-request.ts'
 import ResponseHeadersTab from './response-headers-tab.vue'
 import formatBytes from '@/utils/format-numbers.ts'
 import { Upload } from '@vicons/fa'
+import { useI18n } from 'vue-i18n'
 
 const RESPONSE_MIN = 120
 const REQUEST_MIN = 180
@@ -25,6 +26,7 @@ const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 const { activeDraft, hasProject } = storeToRefs(projectStore)
 const { activeRequestPath } = storeToRefs(workspaceStore)
+const { t } = useI18n()
 
 const panelRef = useTemplateRef<HTMLElement>('panel')
 const {
@@ -90,7 +92,7 @@ async function sendRequest() {
     response.value = await makeRequest(draft)
   } catch (error) {
     response.value = null
-    responseError.value = error instanceof Error ? error.message : 'No se pudo enviar la petición'
+    responseError.value = error instanceof Error ? error.message : t('request.error.sendFailed')
   } finally {
     isSending.value = false
   }
@@ -247,7 +249,7 @@ watch(
                   </template>
                 </n-button>
               </template>
-              Enviar petición
+              {{ t('request.actions.send') }}
             </n-tooltip>
           </div>
         </div>
@@ -259,15 +261,15 @@ watch(
 
         <div class="request-panel__editor">
           <n-tabs v-model:value="requestTab" type="line" size="small" class="request-panel__tabs">
-            <n-tab-pane name="params" tab="Params" display-directive="show:lazy">
+            <n-tab-pane name="params" :tab="t('request.params')" display-directive="show:lazy">
               <RequestParamsEditor :params="activeDraft.params ?? []" />
             </n-tab-pane>
-            <n-tab-pane name="headers" tab="Headers" display-directive="show:lazy">
+            <n-tab-pane name="headers" :tab="t('request.headers')" display-directive="show:lazy">
               <RequestHeadersEditor :headers="activeDraft.headers ?? []" />
             </n-tab-pane>
             <n-tab-pane
               name="body"
-              tab="Body"
+              :tab="t('request.body')"
               :disabled="isBodyDisabled"
               display-directive="show:lazy"
               class="request-panel__body-pane"
@@ -284,12 +286,12 @@ watch(
         class="request-panel__response"
         :style="{ height: `${responseHeight}px`, flexBasis: `${responseHeight}px` }"
       >
-        <div class="request-panel__response-title">Response</div>
+        <div class="request-panel__response-title">{{ t('request.response') }}</div>
         <div v-if="responseError" class="request-panel__error">
           {{ responseError }}
         </div>
         <div v-else-if="!response">
-          <n-empty description="Envía una petición para ver la respuesta" size="small" />
+          <n-empty :description="t('request.empty.response')" size="small" />
         </div>
         <div v-else class="request-panel__response-content">
           <div class="request-panel__meta">
@@ -300,13 +302,13 @@ watch(
             >
           </div>
           <n-tabs default-value="body" class="request-panel__response-tabs">
-            <n-tab-pane name="body" tab="Body">
+            <n-tab-pane name="body" :tab="t('request.body')">
               <ResponseBodyTab
                 :response-body="response.body"
                 :content-type="response.headers['content-type']"
               />
             </n-tab-pane>
-            <n-tab-pane name="headers" tab="Headers">
+            <n-tab-pane name="headers" :tab="t('request.headers')">
               <ResponseHeadersTab :response-headers="response.headers"></ResponseHeadersTab>
             </n-tab-pane>
           </n-tabs>
@@ -317,9 +319,7 @@ watch(
     <div v-else class="request-panel__placeholder">
       <n-empty
         :description="
-          hasProject
-            ? 'Selecciona una petición del proyecto'
-            : 'Abre o crea un proyecto para empezar'
+          hasProject ? t('request.empty.selectRequest') : t('request.empty.openProject')
         "
       />
     </div>

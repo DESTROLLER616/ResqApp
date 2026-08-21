@@ -1,0 +1,120 @@
+{
+  "common": {
+    "save": "Guardar",
+    "init": "Inicializar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "delete": "Borrar",
+    "rename": "Cambiar nombre",
+    "search": "Buscar...",
+    "theme": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    }
+  },
+  "validation": {
+    "required": "El campo {field} no puede estar vacío",
+    "nameRequired": "El nombre no puede estar vacío"
+  },
+  "project": {
+    "untitled": "Proyecto",
+    "settings": "Configuración",
+    "actions": {
+      "newFolder": "Nueva carpeta",
+      "newRequest": "Nueva petición"
+    },
+    "empty": {
+      "tree": "Sin carpetas ni peticiones",
+      "workspace": "Abre o crea un proyecto desde la barra derecha"
+    },
+    "modal": {
+      "new": "Nuevo proyecto",
+      "name": "Nombre del proyecto",
+      "folderName": "Nombre de carpeta",
+      "requestName": "Nombre de petición",
+      "initProject": "Inicializar proyecto",
+      "willCreateFolder": "Se creara en {path}",
+      "initFolderToProject": "La carpeta no es un proyecto. ¿Inicializarla?"
+    },
+    "dialog": {
+      "openProject": "Abrir proyecto",
+      "createParentFolder": "Carpeta padre del proyecto"
+    },
+    "toast": {
+      "created": "Proyecto creado",
+      "initialized": "Proyecto inicializado",
+      "folderCreated": "Carpeta creada",
+      "requestCreated": "Petición creada",
+      "renamed": "Nombre actualizado",
+      "deleted": "Eliminado",
+      "movedTo": "Movido a {path}",
+      "movedToRoot": "Movido a la raíz: {name}"
+    },
+    "dnd": {
+      "dropToRoot": "Soltar aquí para mover a la raíz",
+      "cannotMoveIntoSelf": "No se puede mover una carpeta dentro de sí misma"
+    },
+    "recent": {
+      "title": "Proyectos",
+      "open": "Abrir...",
+      "new": "Nuevo...",
+      "empty": "Sin proyectos recientes"
+    },
+    "tabs": {
+      "empty": "Selecciona una petición del proyecto"
+    }
+  },
+  "request": {
+    "params": "Parámetros",
+    "headers": "Cabeceras",
+    "body": "Cuerpo",
+    "response": "Respuesta",
+    "actions": {
+      "send": "Enviar petición",
+      "addParameter": "Agregar nuevo parámetro",
+      "addHeader": "Agregar nueva cabecera"
+    },
+    "empty": {
+      "selectRequest": "Selecciona una petición del proyecto",
+      "openProject": "Abre o crea un proyecto para empezar",
+      "response": "Envía una petición para ver la respuesta",
+      "body": "Sin cuerpo en la respuesta",
+      "headers": "Sin cabeceras en la respuesta"
+    },
+    "error": {
+      "sendFailed": "No se pudo enviar la petición"
+    },
+    "table": {
+      "name": "Nombre",
+      "value": "Valor",
+      "active": "Activo",
+      "actions": "Acciones"
+    }
+  },
+  "errors": {
+    "noProjectOpen": "No hay ningún proyecto abierto",
+    "invalidSourcePath": "Ruta de origen no válida"
+  },
+  "menu": {
+    "app": "Aplicación",
+    "file": "Archivo",
+    "edit": "Editar",
+    "view": "Ver",
+    "newProject": "Nuevo proyecto...",
+    "openProject": "Abrir proyecto…",
+    "openRecent": "Abrir reciente",
+    "noRecentProjects": "Ningún proyecto reciente",
+    "refreshProject": "Actualizar proyecto",
+    "projectSidebar": "Barra del proyecto",
+    "recentProjects": "Proyectos recientes",
+    "theme": "Tema",
+    "language": "Idioma",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "cut": "Cortar",
+    "copy": "Copiar",
+    "paste": "Pegar",
+    "selectAll": "Seleccionar todo"
+  }
+}

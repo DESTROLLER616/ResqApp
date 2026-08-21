@@ -1,0 +1,120 @@
+{
+  "common": {
+    "save": "Save",
+    "init": "Initialize",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "rename": "Rename",
+    "search": "Search...",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  },
+  "validation": {
+    "required": "The {field} field cannot be empty",
+    "nameRequired": "The name cannot be empty"
+  },
+  "project": {
+    "untitled": "Project",
+    "settings": "Settings",
+    "actions": {
+      "newFolder": "New folder",
+      "newRequest": "New request"
+    },
+    "empty": {
+      "tree": "No folders or requests",
+      "workspace": "Open or create a project from the right sidebar"
+    },
+    "modal": {
+      "new": "New project",
+      "name": "Project name",
+      "folderName": "Folder name",
+      "requestName": "Request name",
+      "initProject": "Initialize project",
+      "willCreateFolder": "It will be created in {path}",
+      "initFolderToProject": "The folder is not a project. Initialize it?"
+    },
+    "dialog": {
+      "openProject": "Open project",
+      "createParentFolder": "Project parent folder"
+    },
+    "toast": {
+      "created": "Project created",
+      "initialized": "Project initialized",
+      "folderCreated": "Folder created",
+      "requestCreated": "Request created",
+      "renamed": "Name updated",
+      "deleted": "Deleted",
+      "movedTo": "Moved to {path}",
+      "movedToRoot": "Moved to root: {name}"
+    },
+    "dnd": {
+      "dropToRoot": "Drop here to move to the root",
+      "cannotMoveIntoSelf": "Cannot move a folder into itself"
+    },
+    "recent": {
+      "title": "Projects",
+      "open": "Open...",
+      "new": "New...",
+      "empty": "No recent projects"
+    },
+    "tabs": {
+      "empty": "Select a request from the project"
+    }
+  },
+  "request": {
+    "params": "Parameters",
+    "headers": "Headers",
+    "body": "Body",
+    "response": "Response",
+    "actions": {
+      "send": "Send request",
+      "addParameter": "Add new parameter",
+      "addHeader": "Add new header"
+    },
+    "empty": {
+      "selectRequest": "Select a request from the project",
+      "openProject": "Open or create a project to get started",
+      "response": "Send a request to see the response",
+      "body": "No body in the response",
+      "headers": "No headers in the response"
+    },
+    "error": {
+      "sendFailed": "Could not send the request"
+    },
+    "table": {
+      "name": "Name",
+      "value": "Value",
+      "active": "Active",
+      "actions": "Actions"
+    }
+  },
+  "errors": {
+    "noProjectOpen": "No project open",
+    "invalidSourcePath": "Invalid source path"
+  },
+  "menu": {
+    "app": "Application",
+    "file": "File",
+    "edit": "Edit",
+    "view": "View",
+    "newProject": "New project...",
+    "openProject": "Open project…",
+    "openRecent": "Open recent",
+    "noRecentProjects": "No recent projects",
+    "refreshProject": "Refresh project",
+    "projectSidebar": "Project sidebar",
+    "recentProjects": "Recent projects",
+    "theme": "Theme",
+    "language": "Language",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select all"
+  }
+}

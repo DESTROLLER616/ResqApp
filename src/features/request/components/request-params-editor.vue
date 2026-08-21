@@ -3,12 +3,14 @@ import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import type { HttpParam } from '@/types/http'
 import { Plus, TrashAlt } from '@vicons/fa'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   params: HttpParam[]
 }>()
 
 const projectStore = useProjectStore()
+const { t } = useI18n()
 
 function updateParam(
   paramId: string,
@@ -44,10 +46,10 @@ function deleteParams(id: string): void {
     <n-table striped size="small" class="params-editor__table">
       <thead>
         <tr>
-          <th style="width: 25%">Name</th>
-          <th style="width: 25%">Value</th>
-          <th style="width: 25%; text-align: center">Active</th>
-          <th style="width: 25%; text-align: center">Action</th>
+          <th style="width: 25%">{{ t('request.table.name') }}</th>
+          <th style="width: 25%">{{ t('request.table.value') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.active') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -55,7 +57,7 @@ function deleteParams(id: string): void {
           <td>
             <n-input
               :value="param.key"
-              placeholder="Name"
+              :placeholder="t('request.table.name')"
               size="small"
               @update:value="(key) => updateParam(param.id, { key })"
             />
@@ -63,7 +65,7 @@ function deleteParams(id: string): void {
           <td>
             <n-input
               :value="param.value"
-              placeholder="Value"
+              :placeholder="t('request.table.value')"
               size="small"
               @update:value="(value) => updateParam(param.id, { value })"
             />
@@ -93,7 +95,7 @@ function deleteParams(id: string): void {
             </template>
           </n-button>
         </template>
-        Agregar nuevo parámetro
+        {{ t('request.actions.addParameter') }}
       </n-tooltip>
     </div>
   </div>

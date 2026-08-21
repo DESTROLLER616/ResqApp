@@ -23,14 +23,4 @@ function updateBody(value: string): void {
   />
 </template>
 
-<style scoped>
-.body-editor {
-  height: 100%;
-}
-
-.body-editor :deep(.n-input),
-.body-editor :deep(.n-input-wrapper),
-.body-editor :deep(textarea) {
-  height: 100% !important;
-}
-</style>
+<style scoped src="@/styles/request-body-editor.css"></style>

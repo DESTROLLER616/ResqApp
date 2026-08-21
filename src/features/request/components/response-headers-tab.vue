@@ -25,15 +25,4 @@ const headerEntries = computed(() => Object.entries(props.responseHeaders))
   </div>
 </template>
 
-<style scoped>
-.response-headers-tab {
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.response-headers-tab__row {
-  margin-bottom: 6px;
-  word-break: break-word;
-}
-</style>
+<style scoped src="@/styles/response-headers-tab.css"></style>

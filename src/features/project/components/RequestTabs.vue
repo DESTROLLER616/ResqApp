@@ -55,35 +55,4 @@ function onClose(name: string | number) {
   </div>
 </template>
 
-<style scoped>
-.request-tabs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 40px;
-  padding: 6px 8px 0;
-  border-bottom: 1px solid var(--app-border);
-  background: var(--app-surface);
-}
-
-.request-tabs :deep(.n-tabs) {
-  flex: 1;
-  min-width: 0;
-}
-
-.request-tabs :deep(.n-tabs-nav) {
-  padding-left: 0 !important;
-}
-
-.request-tabs :deep(.n-tabs-pad),
-.request-tabs :deep(.n-tabs-pane-wrapper) {
-  display: none;
-}
-
-.request-tabs__empty {
-  flex: 1;
-  display: grid;
-  align-items: center;
-  padding: 4px 8px 10px;
-}
-</style>
+<style scoped src="@/styles/request-tabs.css"></style>

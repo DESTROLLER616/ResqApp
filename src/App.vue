@@ -71,8 +71,4 @@ const naiveUiLocale = computed(() => {
   </n-config-provider>
 </template>
 
-<style scoped>
-.app-root {
-  height: 100%;
-}
-</style>
+<style scoped src="@/styles/app.css"></style>

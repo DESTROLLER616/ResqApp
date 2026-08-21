@@ -101,13 +101,4 @@ function deleteParams(id: string): void {
   </div>
 </template>
 
-<style scoped>
-.params-editor__table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.params-editor__actions {
-  margin-top: 8px;
-}
-</style>
+<style scoped src="@/styles/request-params-editor.css"></style>

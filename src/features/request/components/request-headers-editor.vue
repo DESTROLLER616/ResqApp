@@ -101,13 +101,4 @@ function deleteHeader(id: string): void {
   </div>
 </template>
 
-<style scoped>
-.headers-editor__table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.headers-editor__actions {
-  margin-top: 8px;
-}
-</style>
+<style scoped src="@/styles/request-headers-editor.css"></style>

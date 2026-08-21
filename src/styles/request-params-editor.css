@@ -1,0 +1,8 @@
+.params-editor__table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.params-editor__actions {
+  margin-top: 8px;
+}

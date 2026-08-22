@@ -35,7 +35,9 @@
       "requestName": "Nombre de petición",
       "initProject": "Inicializar proyecto",
       "willCreateFolder": "Se creara en {path}",
-      "initFolderToProject": "La carpeta no es un proyecto. ¿Inicializarla?"
+      "initFolderToProject": "La carpeta no es un proyecto. ¿Inicializarla?",
+      "deleteFolderHint": "Se eliminará \"{name}\" y todo su contenido.",
+      "deleteRequestHint": "Se eliminará \"{name}\"."
     },
     "dialog": {
       "openProject": "Abrir proyecto",

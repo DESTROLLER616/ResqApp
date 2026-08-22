@@ -35,7 +35,9 @@
       "requestName": "Request name",
       "initProject": "Initialize project",
       "willCreateFolder": "It will be created in {path}",
-      "initFolderToProject": "The folder is not a project. Initialize it?"
+      "initFolderToProject": "The folder is not a project. Initialize it?",
+      "deleteFolderHint": "This will delete \"{name}\" and everything inside it.",
+      "deleteRequestHint": "This will delete \"{name}\"."
     },
     "dialog": {
       "openProject": "Open project",

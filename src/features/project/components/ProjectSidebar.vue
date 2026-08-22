@@ -1,37 +1,33 @@
 <script setup lang="ts">
-import { computed, h, ref, watch } from 'vue'
+import { computed, h, ref } from 'vue'
 import {
   NButton,
   NDropdown,
   NEmpty,
   NIcon,
   NInput,
-  NModal,
   NSpace,
   NTree,
-  NSelect,
   NTooltip,
   NText,
   useMessage,
 } from 'naive-ui'
-import type { DropdownOption, TreeDragInfo, TreeDropInfo, TreeOption, SelectOption } from 'naive-ui'
-import { FolderOpen, FolderPlus, FileAlt, TrashAlt, PenAlt, Cog } from '@vicons/fa'
+import type { TreeOption } from 'naive-ui'
+import { FolderOpen, FolderPlus, FileAlt } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
+import ProjectEntryModals from '@/features/project/components/ProjectEntryModals.vue'
+import { useProjectTreeActions } from '@/features/project/composables/use-project-tree-actions'
+import { useProjectTreeDnd } from '@/features/project/composables/use-project-tree-dnd'
+import { useProjectTreeExpansion } from '@/features/project/composables/use-project-tree-expansion'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { HTTP_METHODS, type HttpMethod } from '@/types/http'
-import type { ProjectTreeNode } from '@/types/project'
+import type { ProjectTreeOption } from '@/types/project'
+import { toErrorMessage } from '@/utils/error-message'
+import { relativePathFromRequestKey, requestTreeKey, toTreeOptions } from '@/utils/project-tree'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-
-interface ProjectTreeOption extends TreeOption {
-  key: string
-  relativePath: string
-  kind: 'folder' | 'request'
-  method?: HttpMethod
-}
 
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
@@ -40,234 +36,41 @@ const { activeRequestPath } = storeToRefs(workspaceStore)
 const message = useMessage()
 
 const search = ref('')
-const createModal = ref<{
-  type: 'folder' | 'request'
-  parentRelative: string
-} | null>(null)
-const createName = ref('')
-const createHttpMethod = ref(HTTP_METHODS[0])
-const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
-  label: method,
-  value: method,
-}))
-const renameModal = ref<{
-  relativePath: string
-  kind: 'folder' | 'request'
-} | null>(null)
-const renameName = ref('')
-const contextMenu = ref<{
-  x: number
-  y: number
-  option: ProjectTreeOption
-} | null>(null)
-const draggingNode = ref<ProjectTreeOption | null>(null)
-const isRootDropActive = ref(false)
-const isMoving = ref(false)
-const expandedKeys = ref<Array<string | number>>([])
-const knownFolderKeys = ref(new Set<string>())
-/** Snapshot of expanded folders before search expands everything. */
-const expandedKeysBeforeSearch = ref<Array<string | number> | null>(null)
-
-const EXPANDED_STORAGE_PREFIX = 'project-sidebar:expanded:'
-
 const isSearchActive = computed(() => search.value.trim().length > 0)
-// Allow dragging even while searching; we'll still validate on drop.
-const canDrag = computed(() => !isMoving.value)
+const treeData = computed(() => toTreeOptions(tree.value, search.value.trim().toLowerCase()))
 
-function storageKeyForProject(path: string): string {
-  return `${EXPANDED_STORAGE_PREFIX}${path}`
-}
-
-function loadExpandedKeys(path: string): string[] {
-  try {
-    const raw = localStorage.getItem(storageKeyForProject(path))
-    if (!raw) return []
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((key): key is string => typeof key === 'string')
-  } catch {
-    return []
-  }
-}
-
-function saveExpandedKeys(path: string, keys: Array<string | number>): void {
-  try {
-    localStorage.setItem(storageKeyForProject(path), JSON.stringify(keys.map(String)))
-  } catch {
-    // Quota / private mode — ignore; expansion still works in-session.
-  }
-}
-
-function parentOf(relativePath: string): string {
-  const index = relativePath.lastIndexOf('/')
-  return index === -1 ? '' : relativePath.slice(0, index)
-}
-
-function folderKeysForPath(relativePath: string): string[] {
-  if (!relativePath) return []
-  const parts = relativePath.split('/')
-  const keys: string[] = []
-  for (let i = 0; i < parts.length; i += 1) {
-    keys.push(`folder:${parts.slice(0, i + 1).join('/')}`)
-  }
-  return keys
-}
-
-function collectFolderKeys(nodes: ProjectTreeOption[]): string[] {
-  const keys: string[] = []
-  for (const node of nodes) {
-    if (node.kind !== 'folder') continue
-    keys.push(String(node.key))
-    if (Array.isArray(node.children) && node.children.length > 0) {
-      keys.push(...collectFolderKeys(node.children as ProjectTreeOption[]))
-    }
-  }
-  return keys
-}
-
-/** Only folders that have children — empty expanded folders break Naive drop targeting. */
-function collectNonEmptyFolderKeys(nodes: ProjectTreeOption[]): string[] {
-  const keys: string[] = []
-  for (const node of nodes) {
-    if (node.kind !== 'folder') continue
-    const children = Array.isArray(node.children) ? (node.children as ProjectTreeOption[]) : []
-    if (children.length === 0) continue
-    keys.push(String(node.key))
-    keys.push(...collectNonEmptyFolderKeys(children))
-  }
-  return keys
-}
-
-function expandFolders(relativeFolderPath: string): void {
-  if (!relativeFolderPath) return
-  const next = new Set(expandedKeys.value.map(String))
-  for (const key of folderKeysForPath(relativeFolderPath)) {
-    next.add(key)
-  }
-  expandedKeys.value = [...next]
-}
-
-function toTreeOptions(nodes: ProjectTreeNode[], query: string): ProjectTreeOption[] {
-  const result: ProjectTreeOption[] = []
-
-  for (const node of nodes) {
-    if (node.kind === 'folder') {
-      const children = toTreeOptions(node.children, query)
-      const matchesSelf = !query || node.name.toLowerCase().includes(query)
-      if (!query || matchesSelf || children.length > 0) {
-        result.push({
-          key: `folder:${node.relativePath}`,
-          label: node.name,
-          relativePath: node.relativePath,
-          kind: 'folder',
-          // Keep empty folders droppable / expandable in Naive Tree.
-          isLeaf: false,
-          children: matchesSelf && !query ? toTreeOptions(node.children, '') : children,
-        })
-      }
-      continue
-    }
-
-    const haystack = `${node.name} ${node.method} ${node.relativePath}`.toLowerCase()
-    if (query && !haystack.includes(query)) continue
-
-    result.push({
-      key: `request:${node.relativePath}`,
-      label: node.name,
-      relativePath: node.relativePath,
-      kind: 'request',
-      method: node.method,
-      isLeaf: true,
-    })
-  }
-
-  return result
-}
-
-const treeData = computed(() => {
-  const query = search.value.trim().toLowerCase()
-  return toTreeOptions(tree.value, query)
-})
-
-watch(
+const { expandedKeys, onUpdateExpandedKeys, expandFolders } = useProjectTreeExpansion({
   rootPath,
-  (path) => {
-    knownFolderKeys.value = new Set()
-    expandedKeysBeforeSearch.value = null
-    expandedKeys.value = path ? loadExpandedKeys(path) : []
-  },
-  { immediate: true },
-)
-
-watch(
   treeData,
-  (nodes) => {
-    const folderKeys = collectFolderKeys(nodes)
-    const folderKeySet = new Set(folderKeys)
-    const nonEmptyFolderKeys = collectNonEmptyFolderKeys(nodes)
-    const nonEmptyFolderKeySet = new Set(nonEmptyFolderKeys)
-
-    if (knownFolderKeys.value.size === 0) {
-      // Restore persisted expansion (or stay collapsed). Never force-open all.
-      expandedKeys.value = expandedKeys.value
-        .map(String)
-        .filter((key) => nonEmptyFolderKeySet.has(key))
-    } else {
-      const retained = expandedKeys.value.map(String).filter((key) => folderKeySet.has(key))
-      // Auto-expand newly created non-empty folders so the new item is visible.
-      const discovered = nonEmptyFolderKeys.filter((key) => !knownFolderKeys.value.has(key))
-
-      const expanded = new Set<string>()
-      for (const key of retained) {
-        // Keep user-expanded non-empty folders. Collapse empty ones so edge
-        // drops are not remapped to the next sibling by Naive Tree.
-        if (nonEmptyFolderKeySet.has(key)) expanded.add(key)
-      }
-      for (const key of discovered) expanded.add(key)
-
-      expandedKeys.value = [...expanded]
-    }
-
-    knownFolderKeys.value = folderKeySet
-
-    // Search should reveal matches under collapsed folders without persisting.
-    if (isSearchActive.value) {
-      expandedKeys.value = collectFolderKeys(nodes)
-    }
-  },
-  { immediate: true },
-)
-
-watch(isSearchActive, (searching, wasSearching) => {
-  if (searching && !wasSearching) {
-    expandedKeysBeforeSearch.value = [...expandedKeys.value]
-    expandedKeys.value = collectFolderKeys(treeData.value)
-    return
-  }
-  if (!searching && wasSearching && expandedKeysBeforeSearch.value) {
-    const nonEmpty = new Set(collectNonEmptyFolderKeys(treeData.value))
-    expandedKeys.value = expandedKeysBeforeSearch.value
-      .map(String)
-      .filter((key) => nonEmpty.has(key))
-    expandedKeysBeforeSearch.value = null
-  }
+  isSearchActive,
 })
 
-watch(expandedKeys, (keys) => {
-  if (!rootPath.value || isSearchActive.value) return
-  saveExpandedKeys(rootPath.value, keys)
+const {
+  canDrag,
+  isRootDropActive,
+  allowDrop,
+  onDragStart,
+  onDragEnd,
+  onDrop,
+  onTreeDragOver,
+  onRootDragOver,
+  onRootDragLeave,
+  onRootDrop,
+} = useProjectTreeDnd({
+  treeData,
+  expandedKeys,
+  expandFolders,
 })
+
+const { openCreate, contextMenu, dropdownOptions, nodeProps, onDropdownSelect, closeContextMenu } =
+  useProjectTreeActions()
 
 const selectedKeys = computed(() => {
   if (activeRequestPath.value) {
-    return [`request:${activeRequestPath.value}`]
+    return [requestTreeKey(activeRequestPath.value)]
   }
   return []
 })
-
-function onUpdateExpandedKeys(keys: Array<string | number>): void {
-  expandedKeys.value = keys
-}
 
 function renderLabel({ option }: { option: TreeOption }) {
   const node = option as ProjectTreeOption
@@ -286,270 +89,13 @@ function renderLabel({ option }: { option: TreeOption }) {
 }
 
 async function onSelect(keys: Array<string | number>) {
-  const key = String(keys[0] ?? '')
-  if (!key.startsWith('request:')) return
-  const relativePath = key.slice('request:'.length)
+  const relativePath = relativePathFromRequestKey(String(keys[0] ?? ''))
+  if (!relativePath) return
   try {
     await projectStore.selectRequest(relativePath)
   } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
+    message.error(toErrorMessage(e))
   }
-}
-
-function openCreate(type: 'folder' | 'request', parentRelative = '') {
-  createModal.value = { type, parentRelative }
-  createName.value = ''
-}
-
-async function confirmCreate(): Promise<boolean> {
-  if (!createModal.value) return false
-  const nameValue = createName.value.trim()
-  const httpMethodValue = createHttpMethod.value
-  if (!nameValue) {
-    message.warning(t('validation.nameRequired'))
-    return false
-  }
-
-  try {
-    if (createModal.value.type === 'folder') {
-      await projectStore.createFolder(createModal.value.parentRelative, nameValue)
-      message.success(t('project.toast.folderCreated'))
-    } else {
-      await projectStore.createRequest(createModal.value.parentRelative, nameValue, httpMethodValue)
-      message.success(t('project.toast.requestCreated'))
-    }
-    createModal.value = null
-    return true
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-    return false
-  }
-}
-
-const dropdownOptions = computed<DropdownOption[]>(() => {
-  const option = contextMenu.value?.option
-  if (!option) return []
-
-  const items: DropdownOption[] = []
-  if (option.kind === 'folder') {
-    items.push(
-      {
-        label: t('project.actions.newFolder'),
-        key: 'new-folder',
-        icon: () => h(NIcon, { component: FolderPlus }),
-      },
-      {
-        label: t('project.actions.newRequest'),
-        key: 'new-request',
-        icon: () => h(NIcon, { component: FileAlt }),
-      },
-    )
-  }
-  items.push(
-    {
-      label: t('common.rename'),
-      key: 'rename',
-      icon: () => h(NIcon, { component: PenAlt }),
-    },
-    {
-      label: t('common.delete'),
-      key: 'delete',
-      icon: () => h(NIcon, { component: TrashAlt }),
-    },
-  )
-  return items
-})
-
-function openRename(option: ProjectTreeOption): void {
-  renameModal.value = {
-    relativePath: option.relativePath,
-    kind: option.kind,
-  }
-  renameName.value = String(option.label ?? '')
-}
-
-async function confirmRename(): Promise<boolean> {
-  if (!renameModal.value) return false
-  const nameValue = renameName.value.trim()
-  if (!nameValue) {
-    message.warning(t('validation.nameRequired'))
-    return false
-  }
-
-  try {
-    await projectStore.renameEntry(renameModal.value.relativePath, nameValue)
-    message.success(t('project.toast.renamed'))
-    renameModal.value = null
-    return true
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-    return false
-  }
-}
-
-function onNodeContextMenu(event: MouseEvent, option: TreeOption) {
-  event.preventDefault()
-  contextMenu.value = {
-    x: event.clientX,
-    y: event.clientY,
-    option: option as ProjectTreeOption,
-  }
-}
-
-async function onDropdownSelect(key: string | number) {
-  const option = contextMenu.value?.option
-  contextMenu.value = null
-  if (!option) return
-
-  if (key === 'new-folder') {
-    openCreate('folder', option.relativePath)
-    return
-  }
-  if (key === 'new-request') {
-    openCreate('request', option.relativePath)
-    return
-  }
-  if (key === 'rename') {
-    openRename(option)
-    return
-  }
-  if (key === 'delete') {
-    try {
-      await projectStore.deleteEntry(option.relativePath)
-      message.success(t('project.toast.deleted'))
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : String(e))
-    }
-  }
-}
-
-function closeContextMenu() {
-  contextMenu.value = null
-}
-
-function nodeProps({ option }: { option: TreeOption }) {
-  return {
-    onContextmenu(e: MouseEvent) {
-      e.preventDefault()
-      contextMenu.value = {
-        x: e.clientX,
-        y: e.clientY,
-        option: option as ProjectTreeOption,
-      }
-    },
-  }
-}
-
-function isInvalidFolderTarget(drag: ProjectTreeOption, targetPath: string): boolean {
-  if (drag.kind !== 'folder') return false
-  return targetPath === drag.relativePath || targetPath.startsWith(`${drag.relativePath}/`)
-}
-
-function onDragStart({ node, event }: TreeDragInfo) {
-  draggingNode.value = node as ProjectTreeOption
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    // WebKitGTK/Wry on Linux can require payload data for drop eligibility.
-    event.dataTransfer.setData('text/plain', String((node as ProjectTreeOption).relativePath))
-  }
-  // Empty expanded folders make Naive remap edge drops to the next sibling.
-  const nonEmpty = new Set(collectNonEmptyFolderKeys(treeData.value))
-  expandedKeys.value = expandedKeys.value.filter((key) => nonEmpty.has(String(key)))
-}
-
-function onDragEnd() {
-  draggingNode.value = null
-  isRootDropActive.value = false
-}
-
-function allowDrop({ node }: { node: TreeOption; phase: 'drag' | 'drop' }): boolean {
-  if (!canDrag.value) return false
-
-  const drag = draggingNode.value
-  const target = node as ProjectTreeOption
-  if (!drag) return true
-  if (drag.key === target.key) return false
-
-  // Any position on a folder means "move into that folder". Keep only
-  // the hard-invalid case blocked to avoid the "forbidden" cursor.
-  if (target.kind === 'folder') {
-    return !isInvalidFolderTarget(drag, target.relativePath)
-  }
-
-  // Any position on a request is allowed. We resolve to request parent on drop.
-  return !isInvalidFolderTarget(drag, parentOf(target.relativePath))
-}
-
-function resolveDropParent(target: ProjectTreeOption): string {
-  if (target.kind === 'folder') {
-    return target.relativePath
-  }
-  return parentOf(target.relativePath)
-}
-
-async function moveToParent(fromRelative: string, toParentRelative: string): Promise<void> {
-  if (parentOf(fromRelative) === toParentRelative) return
-
-  const baseName = fromRelative.split('/').pop() ?? fromRelative
-
-  isMoving.value = true
-  try {
-    await projectStore.moveEntry(fromRelative, toParentRelative)
-    expandFolders(toParentRelative)
-    message.success(
-      toParentRelative
-        ? t('project.toast.movedTo', { path: `${toParentRelative}/${baseName}` })
-        : t('project.toast.movedToRoot', { name: baseName }),
-    )
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-  } finally {
-    isMoving.value = false
-    draggingNode.value = null
-    isRootDropActive.value = false
-  }
-}
-
-async function onDrop({ node, dragNode }: TreeDropInfo) {
-  const drag = dragNode as ProjectTreeOption
-  const target = node as ProjectTreeOption
-  const toParent = resolveDropParent(target)
-
-  if (isInvalidFolderTarget(drag, toParent)) {
-    message.warning(t('project.dnd.cannotMoveIntoSelf'))
-    return
-  }
-
-  await moveToParent(drag.relativePath, toParent)
-}
-
-function onTreeDragOver({ event }: TreeDragInfo): void {
-  if (!canDrag.value) return
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
-}
-
-function onRootDragOver(event: DragEvent) {
-  if (!canDrag.value || !draggingNode.value) return
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
-  isRootDropActive.value = true
-}
-
-function onRootDragLeave() {
-  isRootDropActive.value = false
-}
-
-async function onRootDrop(event: DragEvent) {
-  event.preventDefault()
-  const drag = draggingNode.value
-  isRootDropActive.value = false
-  if (!drag || !canDrag.value) return
-  await moveToParent(drag.relativePath, '')
 }
 </script>
 
@@ -587,16 +133,6 @@ async function onRootDrop(event: DragEvent) {
           </template>
           {{ t('project.actions.newRequest') }}
         </n-tooltip>
-        <n-tooltip trigger="hover" placement="bottom">
-          <template #trigger>
-            <n-button size="tiny" quaternary>
-              <template #icon>
-                <n-icon :component="Cog" />
-              </template>
-            </n-button>
-          </template>
-          {{ t('project.settings') }}
-        </n-tooltip>
       </n-space>
     </div>
 
@@ -621,7 +157,6 @@ async function onRootDrop(event: DragEvent) {
           :allow-drop="allowDrop"
           @update:selected-keys="onSelect"
           @update:expanded-keys="onUpdateExpandedKeys"
-          @node-contextmenu.prevent="onNodeContextMenu"
           @dragstart="onDragStart"
           @dragover="onTreeDragOver"
           @dragend="onDragEnd"
@@ -657,61 +192,7 @@ async function onRootDrop(event: DragEvent) {
       @clickoutside="closeContextMenu"
     />
 
-    <n-modal
-      :show="createModal !== null"
-      preset="dialog"
-      :title="
-        createModal?.type === 'folder'
-          ? t('project.actions.newFolder')
-          : t('project.actions.newRequest')
-      "
-      :positive-text="t('common.create')"
-      :negative-text="t('common.cancel')"
-      @positive-click="confirmCreate"
-      @negative-click="createModal = null"
-      @close="createModal = null"
-      @update:show="(show) => !show && (createModal = null)"
-    >
-      <n-space vertical size="medium">
-        <n-input
-          v-model:value="createName"
-          :placeholder="
-            createModal?.type === 'folder'
-              ? t('project.modal.folderName')
-              : t('project.modal.requestName')
-          "
-          @keyup.enter="confirmCreate"
-        />
-
-        <n-select
-          v-if="createModal?.type === 'request'"
-          v-model:value="createHttpMethod"
-          :options="methodOptions"
-        />
-      </n-space>
-    </n-modal>
-
-    <n-modal
-      :show="renameModal !== null"
-      preset="dialog"
-      :title="t('common.rename')"
-      :positive-text="t('common.save')"
-      :negative-text="t('common.cancel')"
-      @positive-click="confirmRename"
-      @negative-click="renameModal = null"
-      @close="renameModal = null"
-      @update:show="(show) => !show && (renameModal = null)"
-    >
-      <n-input
-        v-model:value="renameName"
-        :placeholder="
-          renameModal?.kind === 'folder'
-            ? t('project.modal.folderName')
-            : t('project.modal.requestName')
-        "
-        @keyup.enter="confirmRename"
-      />
-    </n-modal>
+    <ProjectEntryModals />
   </div>
 </template>
 

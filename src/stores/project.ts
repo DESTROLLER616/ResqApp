@@ -6,6 +6,7 @@ import type { HttpMethod, RequestDraft } from '@/types/http'
 import type { OpenedProject, ProjectTreeNode } from '@/types/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { entryName, parentOf } from '@/utils/project-tree'
 
 const SAVE_DEBOUNCE_MS = 300
 
@@ -167,9 +168,7 @@ export const useProjectStore = defineStore('project', () => {
     const isRequest = relativePath.toLowerCase().endsWith('.json')
     const stem = trimmed.replace(/\.json$/i, '')
     const baseName = isRequest ? `${stem}.json` : stem
-    const parent = relativePath.includes('/')
-      ? relativePath.slice(0, relativePath.lastIndexOf('/'))
-      : ''
+    const parent = parentOf(relativePath)
     const newRelative = parent ? `${parent}/${baseName}` : baseName
 
     if (newRelative === relativePath) {
@@ -224,7 +223,7 @@ export const useProjectStore = defineStore('project', () => {
 
     await flushSave()
 
-    const baseName = fromRelative.split('/').pop()
+    const baseName = entryName(fromRelative)
     if (!baseName) {
       throw new Error(i18n.global.t('errors.invalidSourcePath'))
     }

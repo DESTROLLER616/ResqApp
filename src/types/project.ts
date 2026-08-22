@@ -1,3 +1,4 @@
+import type { TreeOption } from 'naive-ui'
 import type { HttpMethod } from '@/types/http'
 
 export interface ProjectMeta {
@@ -26,6 +27,16 @@ export interface ProjectRequestNode {
 }
 
 export type ProjectTreeNode = ProjectFolderNode | ProjectRequestNode
+
+export type ProjectEntryKind = ProjectTreeNode['kind']
+
+/** Naive Tree option mapped from `ProjectTreeNode`. */
+export interface ProjectTreeOption extends TreeOption {
+  key: string
+  relativePath: string
+  kind: ProjectEntryKind
+  method?: HttpMethod
+}
 
 export interface OpenedProject {
   rootPath: string

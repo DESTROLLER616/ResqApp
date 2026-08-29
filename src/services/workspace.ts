@@ -1,3 +1,7 @@
+/**
+ * File dedicated to connect workspace actions from "frontend" to "backend" in Rust side.
+ */
+
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { RequestDraft, RequestFile } from '@/types/http'

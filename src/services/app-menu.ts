@@ -1,3 +1,7 @@
+/**
+ * File to build native menu with tauri menu api with actions.
+ */
+
 import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from '@tauri-apps/api/menu'
 import type { RecentProject } from '@/types/project'
 import type { ThemeMode } from '@/types/ui'

@@ -1,4 +1,8 @@
-// utils/detect-body-language.ts (ejemplo)
+/**
+ * File neccessary to have highlight sintax in body response and body request
+ * ? What should I use here to have a better organization in detection languages?
+ */
+
 export type BodyLanguage = 'json' | 'xml' | 'plain'
 
 export function detectBodyLanguage(contentType: string | undefined): BodyLanguage {

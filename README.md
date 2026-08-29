@@ -1,4 +1,4 @@
-# ReqCraft
+# ResqApp
 
 A desktop HTTP client for composing, organizing, and sending API requests. Requests live as JSON files in a folder on disk, so you can keep them next to your code, share them, and version them with Git.
 
@@ -56,12 +56,12 @@ The marker file cannot be renamed, moved, or deleted from the app. Recent projec
 
 ## Stack
 
-| Layer | Tech |
-| --- | --- |
-| Desktop shell | Tauri 2 |
-| UI | Vue 3, Naive UI, Pinia, vue-i18n |
-| Backend | Rust (`reqwest`, `serde`) |
-| Package manager | pnpm |
+| Layer           | Tech                             |
+| --------------- | -------------------------------- |
+| Desktop shell   | Tauri 2                          |
+| UI              | Vue 3, Naive UI, Pinia, vue-i18n |
+| Backend         | Rust (`reqwest`, `serde`)        |
+| Package manager | pnpm                             |
 
 ## Development
 
@@ -74,11 +74,11 @@ pnpm tauri dev
 
 Other scripts:
 
-| Command | Description |
-| --- | --- |
-| `pnpm tauri build` | Production desktop bundle |
-| `pnpm lint` / `pnpm lint:fix` | ESLint |
-| `pnpm format` / `pnpm format:check` | Prettier |
+| Command                             | Description               |
+| ----------------------------------- | ------------------------- |
+| `pnpm tauri build`                  | Production desktop bundle |
+| `pnpm lint` / `pnpm lint:fix`       | ESLint                    |
+| `pnpm format` / `pnpm format:check` | Prettier                  |
 
 ## License
 

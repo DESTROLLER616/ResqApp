@@ -2,7 +2,7 @@
 
 A short, high-level description of the vulnerability and why this fix is needed.
 
-**Do not** include a full exploit, proof of concept, or step-by-step reproduction that a third party could copy. Keep details at the level of *what was wrong* and *how it is now blocked*.
+**Do not** include a full exploit, proof of concept, or step-by-step reproduction that a third party could copy. Keep details at the level of _what was wrong_ and _how it is now blocked_.
 
 - **Advisory / report:** `GHSA-xxxx-xxxx-xxxx` / private report / N/A
 - **Severity:** Critical / High / Medium / Low

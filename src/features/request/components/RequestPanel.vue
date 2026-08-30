@@ -75,10 +75,7 @@ function updateUrl(raw: string): void {
 
   try {
     const parsed = new URL(raw)
-    const params = mergeParamsFromUrlSearch(
-      parsed.searchParams,
-      activeDraft.value?.params ?? [],
-    )
+    const params = mergeParamsFromUrlSearch(parsed.searchParams, activeDraft.value?.params ?? [])
     parsed.search = ''
     skipParamsUrlSync = true
     projectStore.updateActiveRequest({

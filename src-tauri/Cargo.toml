@@ -1,8 +1,8 @@
 [package]
-name = "http-client-app"
+name = "ResqApp"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A desktop HTTP client for composing, organizing, and sending API requests."
+authors = ["Destroller"]
 license = "GPL-3.0-only"
 edition = "2021"
 

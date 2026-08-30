@@ -18,7 +18,7 @@ ReqCraft is in early development (0.1.0). We only accept reports against the lat
 Use one of these channels, in order of preference:
 
 1. **GitHub private advisory** — [Report a vulnerability](https://github.com/DESTROLLER616/http-client-app/security/advisories/new) (private vulnerability reporting).
-2. **Email** — [cristopher.cgca22@gmail.com](mailto:cristopher.cgca22@gmail.com) with the subject `SECURITY: ReqCraft`.
+2. **Email** — [destroller@protonmail.com](mailto:destroller@protonmail.com) with the subject `SECURITY: ReqCraft`.
 
 If you do not get an acknowledgement within **7 days**, send a follow-up email with the same subject.
 

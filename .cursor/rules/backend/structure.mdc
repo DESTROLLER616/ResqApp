@@ -1,0 +1,76 @@
+---
+description: Backend layout — layers under src-tauri/src/
+globs: src-tauri/src/**/*.rs
+alwaysApply: false
+---
+
+# Backend structure (Tauri / Rust)
+
+Organize Rust under `src-tauri/src/` by **layer**. Keep `main.rs` and `lib.rs` thin. Do not dump domain or I/O into `lib.rs`.
+
+## Layout
+
+```
+src-tauri/src/
+├── main.rs              # binary entry — only calls lib::run()
+├── lib.rs               # Builder, plugins, generate_handler! only
+├── error.rs             # AppError + Result alias
+├── commands/            # #[tauri::command] — thin IPC boundary
+│   ├── mod.rs
+│   ├── workspace.rs
+│   └── http.rs
+├── domain/              # types + pure logic (no Tauri, no fs/network)
+│   ├── mod.rs
+│   ├── workspace.rs
+│   └── request.rs
+└── services/            # I/O and side effects
+    ├── mod.rs
+    ├── workspace_store.rs
+    ├── fs_scan.rs
+    └── http_client.rs
+```
+
+## Rules
+
+1. **`main.rs`** only boots the lib. No commands, no business logic.
+2. **`lib.rs`** wires the app: plugins, `invoke_handler`, state. No `fs` / HTTP / domain rules inline.
+3. **`commands/`** = Tauri IPC only. Validate args, call `services/`, map errors. Keep handlers thin.
+4. **`domain/`** = structs (`Serialize`/`Deserialize`), pure helpers. Must not depend on `tauri`, `AppHandle`, or do I/O.
+5. **`services/`** = disk, network, `app.path()`, scanning dirs. May use `domain` types. No UI concerns.
+6. **One module per domain** (`workspace`, `http`). Split into a folder when a file grows past ~200 lines.
+7. **Do not create empty folders “for later”.** Add `http/` (etc.) when you need it.
+8. Prefer a single `error.rs` (`thiserror`) over ad-hoc `String` errors everywhere; commands may still expose `Result<T, String>` at the edge if needed.
+
+## Flow
+
+```
+Vue store → src/services/*.ts (invoke)
+              ↓
+         commands/<domain>.rs
+              ↓
+         services/<…>.rs  +  domain/<…>.rs
+```
+
+## Example — workspace directories
+
+```
+✅ GOOD
+commands/workspace.rs       → load_workspace / add_directory
+services/workspace_store.rs → read/write app_data_dir/workspace.json
+domain/workspace.rs         → WorkspaceConfig { directories: Vec<String> }
+
+❌ BAD
+lib.rs                      → fs::write + serde_json + command body all inlined
+commands/workspace.rs       → raw fs + path traversal with no service/domain split
+domain/workspace.rs         → AppHandle / app.path()
+```
+
+## Alignment with frontend
+
+| Rust | Frontend |
+|------|----------|
+| `commands/` | called via `src/services/` (`invoke`) |
+| `domain/` | `src/types/` (keep JSON field names in sync) |
+| `services/` | real I/O (frontend services only invoke) |
+
+When adding a new backend capability (history, environments, send HTTP), add matching `commands/` + `domain/` + `services/` modules — do not append unrelated logic into an existing domain file or into `lib.rs`.

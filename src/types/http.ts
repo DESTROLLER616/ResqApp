@@ -1,12 +1,4 @@
-export const HTTP_METHODS = [
-  'GET',
-  'POST',
-  'PUT',
-  'PATCH',
-  'DELETE',
-  'HEAD',
-  'OPTIONS',
-] as const
+export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const
 
 export type HttpMethod = (typeof HTTP_METHODS)[number]
 
@@ -24,6 +16,7 @@ export interface HttpParam {
   enabled: boolean
 }
 
+/** In-memory request; `id` is the relative path within the project. */
 export interface RequestDraft {
   id: string
   name: string
@@ -34,8 +27,20 @@ export interface RequestDraft {
   body: string
 }
 
-export interface Collection {
-  id: string
+/** JSON shape stored on disk (no `id`). */
+export interface RequestFile {
   name: string
-  requests: RequestDraft[]
+  method: HttpMethod
+  url: string
+  params: HttpParam[]
+  headers: HttpHeader[]
+  body: string
+}
+
+export interface HttpResponse {
+  status: number
+  statusText: string
+  headers: Record<string, string>
+  body: string
+  elapsedMs: number
 }

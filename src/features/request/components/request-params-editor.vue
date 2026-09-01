@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
-import { useCollectionsStore } from '@/stores/collections'
+import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
+import { useProjectStore } from '@/stores/project'
 import type { HttpParam } from '@/types/http'
+import { Plus, TrashAlt } from '@vicons/fa'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
-  collectionId: string
-  requestId: string
   params: HttpParam[]
 }>()
 
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
+const { t } = useI18n()
 
 function updateParam(
   paramId: string,
@@ -18,7 +19,7 @@ function updateParam(
   const params = props.params.map((param) =>
     param.id === paramId ? { ...param, ...patch } : param,
   )
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { params })
+  projectStore.updateActiveRequest({ params })
 }
 
 function addParam(): void {
@@ -31,18 +32,24 @@ function addParam(): void {
       enabled: true,
     },
   ]
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { params })
+  projectStore.updateActiveRequest({ params })
+}
+
+function deleteParams(id: string): void {
+  const params = props.params.filter((param) => param.id !== id)
+  projectStore.updateActiveRequest({ params })
 }
 </script>
 
 <template>
   <div class="params-editor">
-    <n-table :key="requestId" striped size="small" class="params-editor__table">
+    <n-table striped size="small" class="params-editor__table">
       <thead>
         <tr>
-          <th style="width: 40%">Name</th>
-          <th style="width: 45%">Value</th>
-          <th style="width: 15%; text-align: center">Active</th>
+          <th style="width: 25%">{{ t('request.table.name') }}</th>
+          <th style="width: 25%">{{ t('request.table.value') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.active') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -50,7 +57,7 @@ function addParam(): void {
           <td>
             <n-input
               :value="param.key"
-              placeholder="Param name"
+              :placeholder="t('request.table.name')"
               size="small"
               @update:value="(key) => updateParam(param.id, { key })"
             />
@@ -58,7 +65,7 @@ function addParam(): void {
           <td>
             <n-input
               :value="param.value"
-              placeholder="Param value"
+              :placeholder="t('request.table.value')"
               size="small"
               @update:value="(value) => updateParam(param.id, { value })"
             />
@@ -69,22 +76,29 @@ function addParam(): void {
               @update:checked="(enabled) => updateParam(param.id, { enabled })"
             />
           </td>
+          <td style="text-align: center">
+            <n-button type="error" @click="deleteParams(param.id)">
+              <template #icon>
+                <n-icon :component="TrashAlt" size="12"></n-icon>
+              </template>
+            </n-button>
+          </td>
         </tr>
       </tbody>
     </n-table>
     <div class="params-editor__actions">
-      <n-button size="small" @click="addParam">Add param</n-button>
+      <n-tooltip trigger="hover" placement="bottom">
+        <template #trigger>
+          <n-button size="small" :bordered="false" @click="addParam">
+            <template #icon>
+              <n-icon :component="Plus" size="28" :color="'#ff6543'" />
+            </template>
+          </n-button>
+        </template>
+        {{ t('request.actions.addParameter') }}
+      </n-tooltip>
     </div>
   </div>
 </template>
 
-<style scoped>
-.params-editor__table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.params-editor__actions {
-  margin-top: 8px;
-}
-</style>
+<style scoped src="@/styles/request-params-editor.css"></style>

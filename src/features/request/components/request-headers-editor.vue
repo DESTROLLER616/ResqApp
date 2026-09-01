@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { NButton, NCheckbox, NInput, NTable } from 'naive-ui'
-import { useCollectionsStore } from '@/stores/collections'
+import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
+import { useProjectStore } from '@/stores/project'
 import type { HttpHeader } from '@/types/http'
+import { Plus, TrashAlt } from '@vicons/fa'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
-  collectionId: string
-  requestId: string
   headers: HttpHeader[]
 }>()
 
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
+const { t } = useI18n()
 
 function updateHeader(
   headerId: string,
@@ -18,7 +19,7 @@ function updateHeader(
   const headers = props.headers.map((header) =>
     header.id === headerId ? { ...header, ...patch } : header,
   )
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { headers })
+  projectStore.updateActiveRequest({ headers })
 }
 
 function addHeader(): void {
@@ -31,18 +32,24 @@ function addHeader(): void {
       enabled: true,
     },
   ]
-  collectionsStore.updateRequest(props.collectionId, props.requestId, { headers })
+  projectStore.updateActiveRequest({ headers })
+}
+
+function deleteHeader(id: string): void {
+  const headers = props.headers.filter((header) => header.id !== id)
+  projectStore.updateActiveRequest({ headers })
 }
 </script>
 
 <template>
   <div class="headers-editor">
-    <n-table :key="requestId" striped size="small" class="headers-editor__table">
+    <n-table striped size="small" class="headers-editor__table">
       <thead>
         <tr>
-          <th style="width: 40%">Name</th>
-          <th style="width: 45%">Value</th>
-          <th style="width: 15%; text-align: center">Active</th>
+          <th style="width: 25%">{{ t('request.table.name') }}</th>
+          <th style="width: 25%">{{ t('request.table.value') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.active') }}</th>
+          <th style="width: 25%; text-align: center">{{ t('request.table.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -50,7 +57,7 @@ function addHeader(): void {
           <td>
             <n-input
               :value="header.key"
-              placeholder="Header name"
+              :placeholder="t('request.table.name')"
               size="small"
               @update:value="(key) => updateHeader(header.id, { key })"
             />
@@ -58,7 +65,7 @@ function addHeader(): void {
           <td>
             <n-input
               :value="header.value"
-              placeholder="Header value"
+              :placeholder="t('request.table.value')"
               size="small"
               @update:value="(value) => updateHeader(header.id, { value })"
             />
@@ -69,22 +76,29 @@ function addHeader(): void {
               @update:checked="(enabled) => updateHeader(header.id, { enabled })"
             />
           </td>
+          <td style="text-align: center">
+            <n-button type="error" @click="deleteHeader(header.id)">
+              <template #icon>
+                <n-icon :component="TrashAlt" size="12"></n-icon>
+              </template>
+            </n-button>
+          </td>
         </tr>
       </tbody>
     </n-table>
     <div class="headers-editor__actions">
-      <n-button size="small" @click="addHeader">Add header</n-button>
+      <n-tooltip trigger="hover" placement="bottom">
+        <template #trigger>
+          <n-button size="small" :bordered="false" @click="addHeader">
+            <template #icon>
+              <n-icon :component="Plus" size="28" :color="'#ff6543'" />
+            </template>
+          </n-button>
+        </template>
+        {{ t('request.actions.addHeader') }}
+      </n-tooltip>
     </div>
   </div>
 </template>
 
-<style scoped>
-.headers-editor__table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.headers-editor__actions {
-  margin-top: 8px;
-}
-</style>
+<style scoped src="@/styles/request-headers-editor.css"></style>

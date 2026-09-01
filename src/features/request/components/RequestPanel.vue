@@ -1,158 +1,183 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
-import {
-  NButton,
-  NEmpty,
-  NInput,
-  NSelect,
-  NTabPane,
-  NTabs,
-  NText,
-} from 'naive-ui'
-import type { SelectOption } from 'naive-ui'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { NButton, NEmpty, NInput, NSelect, NTabPane, NTabs, NText, NIcon, NTooltip } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
-import { useResizableSize } from '@/composables/use-resizable-size'
-import { useCollectionsStore } from '@/stores/collections'
+import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { HTTP_METHODS, type HttpMethod } from '@/types/http'
+import { type HttpMethod, type HttpResponse } from '@/types/http'
 import RequestBodyEditor from './request-body-editor.vue'
 import RequestHeadersEditor from './request-headers-editor.vue'
 import RequestParamsEditor from './request-params-editor.vue'
+import ResponseBodyTab from './response-body-tab.vue'
+import makeRequest from '../make-request.ts'
+import ResponseHeadersTab from './response-headers-tab.vue'
+import formatBytes from '@/utils/format-numbers.ts'
+import { Upload } from '@vicons/fa'
+import { useI18n } from 'vue-i18n'
+import { methodOptions, renderMethodLabel } from './request-method-options'
+import { buildCompleteUrl, mergeParamsFromUrlSearch } from '../utils/request-url'
+import { useResponsePanelSize } from '../composables/use-response-panel-size'
 
-const RESPONSE_MIN = 120
-const REQUEST_MIN = 180
-const RESPONSE_INITIAL = 220
-
-const collectionsStore = useCollectionsStore()
+const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
-const { activeCollectionId, activeRequestId } = storeToRefs(workspaceStore)
+const { activeDraft, hasProject } = storeToRefs(projectStore)
+const { activeRequestPath } = storeToRefs(workspaceStore)
+const { t } = useI18n()
+const { responseHeight, onResponseDrag } = useResponsePanelSize(activeDraft)
 
-const panelRef = useTemplateRef<HTMLElement>('panel')
-const { size: responseHeight, resizeBy, setMax } = useResizableSize({
-  initial: RESPONSE_INITIAL,
-  min: RESPONSE_MIN,
-  max: 600,
+const response = ref<HttpResponse | null>(null)
+const responseError = ref<string | null>(null)
+const isSending = ref(false)
+const requestTab = ref<'params' | 'headers' | 'body'>('body')
+
+const METHODS_WITHOUT_BODY: ReadonlySet<HttpMethod> = new Set(['GET', 'HEAD'])
+
+const isBodyDisabled = computed(() => {
+  const method = activeDraft.value?.method
+  return method !== undefined && METHODS_WITHOUT_BODY.has(method)
 })
 
-const activeRequest = computed(() => {
-  if (!activeCollectionId.value || !activeRequestId.value) return null
-  return (
-    collectionsStore.findRequest(
-      activeCollectionId.value,
-      activeRequestId.value,
-    ) ?? null
-  )
-})
+/** Local input value so URL normalization does not fight caret while typing. */
+const urlDraft = ref('')
+let skipParamsUrlSync = false
 
-const methodOptions: SelectOption[] = HTTP_METHODS.map((method) => ({
-  label: String(method).charAt(0).toUpperCase() + String(method).slice(1),
-  value: method,
-}))
-
-function updateResponseMax(): void {
-  const panelHeight = panelRef.value?.clientHeight ?? 0
-  if (panelHeight <= 0) return
-  setMax(Math.max(RESPONSE_MIN, panelHeight - REQUEST_MIN))
+async function sendRequest() {
+  const draft = projectStore.activeDraft
+  if (!draft) return
+  responseError.value = null
+  isSending.value = true
+  try {
+    response.value = await makeRequest(draft)
+  } catch (error) {
+    response.value = null
+    responseError.value = error instanceof Error ? error.message : t('request.error.sendFailed')
+  } finally {
+    isSending.value = false
+  }
 }
 
-function onResponseDrag(delta: number): void {
-  updateResponseMax()
-  resizeBy(-delta)
+function syncUrlDraftFromStore(): void {
+  const draft = activeDraft.value
+  if (!draft) {
+    urlDraft.value = ''
+    return
+  }
+  urlDraft.value = buildCompleteUrl(draft.url, draft.params ?? [])
 }
 
 function updateMethod(value: string): void {
-  if (!activeCollectionId.value || !activeRequestId.value) return
-  collectionsStore.updateRequest(activeCollectionId.value, activeRequestId.value, {
-    method: value as HttpMethod,
-  })
+  projectStore.updateActiveRequest({ method: value as HttpMethod })
 }
 
-function updateUrl(value: string): void {
-  if (!activeCollectionId.value || !activeRequestId.value) return
+function updateUrl(raw: string): void {
+  urlDraft.value = raw
 
-  collectionsStore.updateRequest(activeCollectionId.value, activeRequestId.value, {
-    url: value,
-  })
+  try {
+    const parsed = new URL(raw)
+    const params = mergeParamsFromUrlSearch(parsed.searchParams, activeDraft.value?.params ?? [])
+    parsed.search = ''
+    skipParamsUrlSync = true
+    projectStore.updateActiveRequest({
+      url: parsed.toString(),
+      params,
+    })
+  } catch {
+    // Incomplete URL while typing — keep draft as typed; do not touch params.
+    projectStore.updateActiveRequest({ url: raw })
+  }
 }
 
-onMounted(() => {
-  updateResponseMax()
-  window.addEventListener('resize', updateResponseMax)
+watch(isBodyDisabled, (disabled) => {
+  if (disabled && requestTab.value === 'body') {
+    requestTab.value = 'params'
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateResponseMax)
+  void projectStore.flushSave()
 })
 
-watch(activeRequest, () => {
-  requestAnimationFrame(updateResponseMax)
-})
+watch(
+  activeRequestPath,
+  () => {
+    syncUrlDraftFromStore()
+  },
+  { immediate: true },
+)
 
-const displayCompleteUrl = computed(() => {
-  if (!activeRequest.value) return ''
-
-  const url = new URL(activeRequest.value.url)
-
-  activeRequest.value.params.map((i) => {
-    if (i.enabled && i.key) {
-      url.searchParams.set(i.key, i.value)
+watch(
+  () => activeDraft.value?.params,
+  () => {
+    if (skipParamsUrlSync) {
+      skipParamsUrlSync = false
+      return
     }
-  })
-
-  return url.toString()
-})
+    syncUrlDraftFromStore()
+  },
+  { deep: true },
+)
 </script>
 
 <template>
   <div ref="panel" class="request-panel">
-    <template v-if="activeRequest && activeCollectionId">
+    <template v-if="activeDraft && activeRequestPath">
       <div class="request-panel__request">
         <div class="request-panel__bar">
           <div class="request-panel__bar-row">
             <n-select
               class="request-panel__method"
-              :value="activeRequest.method"
+              :value="activeDraft.method"
               :options="methodOptions"
               :consistent-menu-width="false"
+              :render-label="renderMethodLabel"
               @update:value="updateMethod"
             />
             <n-input
               class="request-panel__url"
-              :value="displayCompleteUrl"
+              :value="urlDraft"
               placeholder="https://api.example.com/…"
               @update:value="updateUrl"
             />
-            <n-button type="primary" class="request-panel__send">Send</n-button>
+            <n-tooltip trigger="hover" placement="bottom">
+              <template #trigger>
+                <n-button
+                  :loading="isSending"
+                  @click="sendRequest"
+                  type="primary"
+                  class="request-panel__send"
+                >
+                  <template #icon>
+                    <n-icon :component="Upload" size="12"></n-icon>
+                  </template>
+                </n-button>
+              </template>
+              {{ t('request.actions.send') }}
+            </n-tooltip>
           </div>
         </div>
 
         <div class="request-panel__name">
-          <n-text strong>{{ activeRequest.name }}</n-text>
+          <n-text strong>{{ activeDraft.name }}</n-text>
+          <n-text depth="3" class="request-panel__path">{{ activeRequestPath }}</n-text>
         </div>
 
         <div class="request-panel__editor">
-          <n-tabs type="line" size="small" default-value="body" class="request-panel__tabs">
-            <n-tab-pane name="params" tab="Params" display-directive="show:lazy">
-              <RequestParamsEditor
-                :collection-id="activeCollectionId"
-                :request-id="activeRequest.id"
-                :params="activeRequest.params ?? []"
-              />
+          <n-tabs v-model:value="requestTab" type="line" size="small" class="request-panel__tabs">
+            <n-tab-pane name="params" :tab="t('request.params')" display-directive="show:lazy">
+              <RequestParamsEditor :params="activeDraft.params ?? []" />
             </n-tab-pane>
-            <n-tab-pane name="headers" tab="Headers" display-directive="show:lazy">
-              <RequestHeadersEditor
-                :collection-id="activeCollectionId"
-                :request-id="activeRequest.id"
-                :headers="activeRequest.headers ?? []"
-              />
+            <n-tab-pane name="headers" :tab="t('request.headers')" display-directive="show:lazy">
+              <RequestHeadersEditor :headers="activeDraft.headers ?? []" />
             </n-tab-pane>
-            <n-tab-pane name="body" tab="Body" display-directive="show:lazy" class="request-panel__body-pane">
-              <RequestBodyEditor
-                :collection-id="activeCollectionId"
-                :request-id="activeRequest.id"
-                :body="activeRequest.body"
-              />
+            <n-tab-pane
+              name="body"
+              :tab="t('request.body')"
+              :disabled="isBodyDisabled"
+              display-directive="show:lazy"
+              class="request-panel__body-pane"
+            >
+              <RequestBodyEditor :body="activeDraft.body" />
             </n-tab-pane>
           </n-tabs>
         </div>
@@ -164,119 +189,44 @@ const displayCompleteUrl = computed(() => {
         class="request-panel__response"
         :style="{ height: `${responseHeight}px`, flexBasis: `${responseHeight}px` }"
       >
-        <div class="request-panel__response-title">Response</div>
-        <n-empty description="Envía una petición para ver la respuesta" size="small" />
+        <div class="request-panel__response-title">{{ t('request.response') }}</div>
+        <div v-if="responseError" class="request-panel__error">
+          {{ responseError }}
+        </div>
+        <div v-else-if="!response">
+          <n-empty :description="t('request.empty.response')" size="small" />
+        </div>
+        <div v-else class="request-panel__response-content">
+          <div class="request-panel__meta">
+            <n-text strong>{{ response.status }} {{ response.statusText }}</n-text>
+            <n-text depth="3"
+              >{{ response.elapsedMs }} ms |
+              {{ formatBytes(Number(response.headers['content-length'] ?? 0)) }}</n-text
+            >
+          </div>
+          <n-tabs default-value="body" class="request-panel__response-tabs">
+            <n-tab-pane name="body" :tab="t('request.body')">
+              <ResponseBodyTab
+                :response-body="response.body"
+                :content-type="response.headers['content-type']"
+              />
+            </n-tab-pane>
+            <n-tab-pane name="headers" :tab="t('request.headers')">
+              <ResponseHeadersTab :response-headers="response.headers"></ResponseHeadersTab>
+            </n-tab-pane>
+          </n-tabs>
+        </div>
       </div>
     </template>
 
     <div v-else class="request-panel__placeholder">
       <n-empty
         :description="
-          activeCollectionId
-            ? 'Selecciona una petición de la colección'
-            : 'Abre una colección para empezar'
+          hasProject ? t('request.empty.selectRequest') : t('request.empty.openProject')
         "
       />
     </div>
   </div>
 </template>
 
-<style scoped>
-.request-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  background: var(--app-surface);
-}
-
-.request-panel__request {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.request-panel__bar {
-  flex-shrink: 0;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--app-border);
-}
-
-.request-panel__bar-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.request-panel__method {
-  flex: 0 0 118px;
-  width: 118px;
-}
-
-.request-panel__url {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.request-panel__send {
-  flex-shrink: 0;
-}
-
-.request-panel__name {
-  flex-shrink: 0;
-  padding: 10px 16px 0;
-}
-
-.request-panel__editor {
-  flex: 1;
-  min-height: 0;
-  padding: 0 16px 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.request-panel__tabs {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.request-panel__tabs :deep(.n-tabs-pane-wrapper),
-.request-panel__tabs :deep(.n-tab-pane) {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-}
-
-.request-panel__body-pane {
-  height: 100%;
-}
-
-.request-panel__response {
-  flex: 0 0 auto;
-  overflow: auto;
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--app-border);
-  min-height: 0;
-}
-
-.request-panel__response-title {
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--app-muted);
-}
-
-.request-panel__placeholder {
-  flex: 1;
-  display: grid;
-  place-items: center;
-}
-</style>
+<style scoped src="@/styles/request-panel.css"></style>

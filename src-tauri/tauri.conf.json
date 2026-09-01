@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "http-client-app",
-  "version": "0.1.0",
-  "identifier": "com.destroller.http-client-app",
+  "productName": "ResqApp",
+  "version": "../package.json",
+  "identifier": "io.github.DESTROLLER616.ResqApp",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,18 +12,42 @@
   "app": {
     "windows": [
       {
-        "title": "http-client-app",
+        "label": "main",
+        "title": "ResqApp",
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true,
+        "maximizable": true,
+        "zoomHotkeysEnabled": true,
         "width": 800,
-        "height": 600
+        "height": 600,
+        "resizable": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "font-src": "'self' data:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://ipc.localhost"
+      },
+      "freezePrototype": false,
+      "capabilities": ["default"]
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["appimage"],
+    "publisher": "Destroller",
+    "homepage": "https://github.com/DESTROLLER616/ResqApp",
+    "category": "DeveloperTool",
+    "shortDescription": "Desktop HTTP client for composing and sending API requests.",
+    "longDescription": "A desktop HTTP client for composing, organizing, and sending API requests. Requests live as JSON files in a folder on disk, so you can keep them next to your code, share them, and version them with Git.",
+    "copyright": "Copyright © 2026 Destroller",
+    "license": "GPL-3.0-only",
+    "licenseFile": "../LICENSE",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

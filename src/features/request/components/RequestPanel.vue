@@ -7,6 +7,7 @@ import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { type HttpMethod, type HttpResponse } from '@/types/http'
 import RequestBodyEditor from './request-body-editor.vue'
+import RequestDocumentationEditor from './RequestDocumentationEditor.vue'
 import RequestHeadersEditor from './request-headers-editor.vue'
 import RequestParamsEditor from './request-params-editor.vue'
 import ResponseBodyTab from './response-body-tab.vue'
@@ -29,7 +30,7 @@ const { responseHeight, onResponseDrag } = useResponsePanelSize(activeDraft)
 const response = ref<HttpResponse | null>(null)
 const responseError = ref<string | null>(null)
 const isSending = ref(false)
-const requestTab = ref<'params' | 'headers' | 'body'>('body')
+const requestTab = ref<'params' | 'headers' | 'body' | 'documentation'>('body')
 
 const METHODS_WITHOUT_BODY: ReadonlySet<HttpMethod> = new Set(['GET', 'HEAD'])
 
@@ -178,6 +179,14 @@ watch(
               class="request-panel__body-pane"
             >
               <RequestBodyEditor :body="activeDraft.body" />
+            </n-tab-pane>
+            <n-tab-pane
+              name="documentation"
+              :tab="t('request.documentation')"
+              display-directive="show:lazy"
+              class="request-panel__docs-pane"
+            >
+              <RequestDocumentationEditor />
             </n-tab-pane>
           </n-tabs>
         </div>

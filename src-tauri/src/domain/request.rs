@@ -48,6 +48,8 @@ pub struct RequestDraft {
     pub headers: Vec<HttpHeader>,
     #[serde(default)]
     pub body: String,
+    #[serde(default)]
+    pub documentation: String,
 }
 
 impl RequestDraft {
@@ -59,6 +61,7 @@ impl RequestDraft {
             params: Vec::new(),
             headers: Vec::new(),
             body: String::new(),
+            documentation: String::new(),
         }
     }
 }

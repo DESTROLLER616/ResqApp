@@ -56,6 +56,7 @@ pub fn create_project(parent_dir: &Path, name: &str) -> Result<OpenedProject> {
     Ok(OpenedProject {
         root_path: root.to_string_lossy().to_string(),
         name: meta.name,
+        documentation: meta.documentation,
         tree: scan_project_tree(&root)?,
     })
 }
@@ -69,8 +70,16 @@ pub fn open_project(path: &Path) -> Result<OpenedProject> {
     Ok(OpenedProject {
         root_path: root.to_string_lossy().to_string(),
         name: meta.name,
+        documentation: meta.documentation,
         tree: scan_project_tree(&root)?,
     })
+}
+
+pub fn write_project_documentation(project_root: &Path, documentation: &str) -> Result<()> {
+    let root = canonicalize_existing(project_root)?;
+    let mut meta = read_project_meta(&root)?;
+    meta.documentation = documentation.to_string();
+    write_project_meta(&root, &meta)
 }
 
 pub fn init_project(path: &Path, name: Option<String>) -> Result<OpenedProject> {

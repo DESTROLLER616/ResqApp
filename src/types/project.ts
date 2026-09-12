@@ -4,6 +4,7 @@ import type { HttpMethod } from '@/types/http'
 export interface ProjectMeta {
   name: string
   version: number
+  documentation?: string
 }
 
 export interface RecentProject {
@@ -38,9 +39,19 @@ export interface ProjectTreeOption extends TreeOption {
   method?: HttpMethod
 }
 
+export type WorkspacePanel = 'request' | 'documentation'
+
+/** Virtual tab key; not a file path, so it cannot collide with request JSON files. */
+export const DOCUMENTATION_TAB_KEY = 'project://documentation'
+
+export function isDocumentationTab(key: string | null | undefined): boolean {
+  return key === DOCUMENTATION_TAB_KEY
+}
+
 export interface OpenedProject {
   rootPath: string
   name: string
+  documentation?: string
   tree: ProjectTreeNode[]
 }
 

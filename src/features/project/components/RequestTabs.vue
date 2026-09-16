@@ -1,16 +1,30 @@
 <script setup lang="ts">
-import { NEmpty, NTabPane, NTabs } from 'naive-ui'
+import { watch } from 'vue'
+import { NEmpty, NIcon, NTabPane, NTabs } from 'naive-ui'
+import { Cog } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { DOCUMENTATION_TAB_KEY, isDocumentationTab } from '@/types/project'
 import { useI18n } from 'vue-i18n'
 
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 const { openTabs, activeRequestPath } = storeToRefs(workspaceStore)
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+watch(locale, () => {
+  workspaceStore.renameTab(DOCUMENTATION_TAB_KEY, t('project.documentation.title'))
+})
 
 async function onUpdateValue(value: string) {
+  if (isDocumentationTab(value)) {
+    await projectStore.flushSave()
+    workspaceStore.openDocumentation(t('project.documentation.title'))
+    return
+  }
+
+  await projectStore.flushDocumentation()
   workspaceStore.setActiveRequest(value)
   try {
     await projectStore.selectRequest(value)
@@ -20,13 +34,25 @@ async function onUpdateValue(value: string) {
 }
 
 function onClose(name: string | number) {
-  workspaceStore.closeRequest(String(name))
+  const closedPath = String(name)
+  const previousActive = workspaceStore.activeRequestPath
+  workspaceStore.closeRequest(closedPath)
+
   const next = workspaceStore.activeRequestPath
-  if (next) {
-    void projectStore.selectRequest(next)
-  } else {
-    projectStore.clearActiveDraft()
+  if (next === previousActive && next !== closedPath) {
+    return
   }
+
+  if (!next) {
+    projectStore.clearActiveDraft()
+    return
+  }
+
+  if (isDocumentationTab(next)) {
+    return
+  }
+
+  void projectStore.selectRequest(next)
 }
 </script>
 
@@ -45,8 +71,14 @@ function onClose(name: string | number) {
         v-for="tab in openTabs"
         :key="tab.relativePath"
         :name="tab.relativePath"
-        :tab="tab.name"
-      />
+      >
+        <template #tab>
+          <span class="request-tabs__label">
+            <n-icon v-if="isDocumentationTab(tab.relativePath)" :component="Cog" :size="12" />
+            {{ tab.name }}
+          </span>
+        </template>
+      </n-tab-pane>
     </n-tabs>
 
     <div v-else class="request-tabs__empty">

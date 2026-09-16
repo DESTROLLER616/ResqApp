@@ -9,6 +9,8 @@ pub const MAX_RECENT_PROJECTS: usize = 20;
 pub struct ProjectMeta {
     pub name: String,
     pub version: u32,
+    #[serde(default)]
+    pub documentation: String,
 }
 
 impl ProjectMeta {
@@ -16,6 +18,7 @@ impl ProjectMeta {
         Self {
             name: name.into(),
             version: 1,
+            documentation: String::new(),
         }
     }
 }
@@ -39,5 +42,7 @@ pub struct WorkspaceConfig {
 pub struct OpenedProject {
     pub root_path: String,
     pub name: String,
+    #[serde(default)]
+    pub documentation: String,
     pub tree: Vec<crate::domain::request::ProjectNode>,
 }

@@ -80,7 +80,8 @@
   height: 100%;
 }
 
-.request-panel__body-pane {
+.request-panel__body-pane,
+.request-panel__docs-pane {
   height: 100%;
 }
 

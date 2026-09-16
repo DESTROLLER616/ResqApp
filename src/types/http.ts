@@ -25,6 +25,7 @@ export interface RequestDraft {
   params: HttpParam[]
   headers: HttpHeader[]
   body: string
+  documentation: string
 }
 
 /** JSON shape stored on disk (no `id`). */
@@ -35,6 +36,7 @@ export interface RequestFile {
   params: HttpParam[]
   headers: HttpHeader[]
   body: string
+  documentation: string
 }
 
 export interface HttpResponse {

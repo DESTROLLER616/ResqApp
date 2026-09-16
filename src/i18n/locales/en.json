@@ -20,6 +20,10 @@
   "project": {
     "untitled": "Project",
     "settings": "Settings",
+    "documentation": {
+      "title": "Documentation",
+      "placeholder": "Write the project documentation..."
+    },
     "actions": {
       "newFolder": "New folder",
       "newRequest": "New request"
@@ -71,6 +75,8 @@
     "params": "Parameters",
     "headers": "Headers",
     "body": "Body",
+    "documentation": "Documentation",
+    "documentationPlaceholder": "Write the request documentation...",
     "response": "Response",
     "actions": {
       "send": "Send request",

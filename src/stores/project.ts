@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { i18n } from '@/i18n'
 import * as workspaceService from '@/services/workspace'
 import type { HttpMethod, RequestDraft } from '@/types/http'
-import type { OpenedProject, ProjectTreeNode } from '@/types/project'
+import { isDocumentationTab, type OpenedProject, type ProjectTreeNode } from '@/types/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { entryName, parentOf } from '@/utils/project-tree'
@@ -16,6 +16,7 @@ function ensureDraftShape(draft: RequestDraft): RequestDraft {
     params: draft.params ?? [],
     headers: draft.headers ?? [],
     body: draft.body ?? '',
+    documentation: draft.documentation ?? '',
   }
 }
 
@@ -36,19 +37,26 @@ export const useProjectStore = defineStore('project', () => {
   const rootPath = ref<string | null>(null)
   const name = ref<string | null>(null)
   const tree = ref<ProjectTreeNode[]>([])
+  const documentation = ref('')
   const activeDraft = ref<RequestDraft | null>(null)
   const isLoading = ref(false)
   const errorMessage = ref<string | null>(null)
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null
   let saveGeneration = 0
+  let documentationSaveTimer: ReturnType<typeof setTimeout> | null = null
+  let documentationSaveGeneration = 0
 
   const hasProject = computed(() => rootPath.value !== null)
 
   function applyOpened(project: OpenedProject): void {
+    const isSameProject = rootPath.value === project.rootPath
     rootPath.value = project.rootPath
     name.value = project.name
     tree.value = project.tree
+    if (!isSameProject) {
+      documentation.value = project.documentation ?? ''
+    }
     errorMessage.value = null
   }
 
@@ -61,6 +69,7 @@ export const useProjectStore = defineStore('project', () => {
     isLoading.value = true
     errorMessage.value = null
     try {
+      await flushDocumentation()
       const project = await workspaceService.openProject(path)
       applyOpened(project)
       const workspaceStore = useWorkspaceStore()
@@ -79,6 +88,7 @@ export const useProjectStore = defineStore('project', () => {
     isLoading.value = true
     errorMessage.value = null
     try {
+      await flushDocumentation()
       const project = await workspaceService.createProject(parentDir, projectName)
       applyOpened(project)
       const workspaceStore = useWorkspaceStore()
@@ -97,6 +107,7 @@ export const useProjectStore = defineStore('project', () => {
     isLoading.value = true
     errorMessage.value = null
     try {
+      await flushDocumentation()
       const project = await workspaceService.initProject(path, projectName)
       applyOpened(project)
       const workspaceStore = useWorkspaceStore()
@@ -137,6 +148,7 @@ export const useProjectStore = defineStore('project', () => {
       requestName,
       {
         body: '',
+        documentation: '',
         headers: [],
         method: httpMethod,
         name: requestName,
@@ -210,7 +222,7 @@ export const useProjectStore = defineStore('project', () => {
     ) {
       activeDraft.value = null
       const activePath = workspaceStore.activeRequestPath
-      if (activePath) {
+      if (activePath && !isDocumentationTab(activePath)) {
         await selectRequest(activePath)
       }
     }
@@ -252,8 +264,11 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   async function selectRequest(relativePath: string): Promise<void> {
-    if (!rootPath.value) return
+    if (!rootPath.value || isDocumentationTab(relativePath)) return
     await flushSave()
+    if (useWorkspaceStore().activePanel === 'documentation') {
+      await flushDocumentation()
+    }
 
     const draft = ensureDraftShape(await workspaceService.readRequest(rootPath.value, relativePath))
     activeDraft.value = draft
@@ -330,10 +345,52 @@ export const useProjectStore = defineStore('project', () => {
     activeDraft.value = null
   }
 
+  function scheduleDocumentationSave(): void {
+    if (!rootPath.value) return
+    if (documentationSaveTimer) clearTimeout(documentationSaveTimer)
+    const generation = ++documentationSaveGeneration
+    const path = rootPath.value
+    const docs = documentation.value
+    documentationSaveTimer = setTimeout(() => {
+      void (async () => {
+        if (generation !== documentationSaveGeneration) return
+        try {
+          await workspaceService.writeProjectDocumentation(path, docs)
+        } catch (e) {
+          errorMessage.value = e instanceof Error ? e.message : String(e)
+        }
+      })()
+    }, SAVE_DEBOUNCE_MS)
+  }
+
+  async function flushDocumentation(): Promise<void> {
+    if (documentationSaveTimer) {
+      clearTimeout(documentationSaveTimer)
+      documentationSaveTimer = null
+    }
+    if (!rootPath.value) return
+    const generation = ++documentationSaveGeneration
+    const path = rootPath.value
+    const docs = documentation.value
+    try {
+      await workspaceService.writeProjectDocumentation(path, docs)
+    } catch (e) {
+      if (generation === documentationSaveGeneration) {
+        errorMessage.value = e instanceof Error ? e.message : String(e)
+      }
+    }
+  }
+
+  function updateDocumentation(value: string): void {
+    documentation.value = value
+    scheduleDocumentationSave()
+  }
+
   return {
     rootPath,
     name,
     tree,
+    documentation,
     activeDraft,
     isLoading,
     errorMessage,
@@ -351,5 +408,7 @@ export const useProjectStore = defineStore('project', () => {
     updateActiveRequest,
     flushSave,
     clearActiveDraft,
+    updateDocumentation,
+    flushDocumentation,
   }
 })

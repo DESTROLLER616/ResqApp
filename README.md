@@ -35,7 +35,8 @@ my-api/
 ```json
 {
   "name": "my-api",
-  "version": 1
+  "version": 1,
+  "documentation": "# Overview\n"
 }
 ```
 
@@ -48,7 +49,8 @@ Each request is a `.json` file:
   "url": "https://api.example.com/users",
   "params": [{ "id": "1", "key": "limit", "value": "20", "enabled": true }],
   "headers": [{ "id": "1", "key": "Accept", "value": "application/json", "enabled": true }],
-  "body": ""
+  "body": "",
+  "documentation": "# List users\n"
 }
 ```
 

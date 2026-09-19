@@ -1,3 +1,5 @@
+import { LanguageBody } from './language-body'
+
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const
 
 export type HttpMethod = (typeof HTTP_METHODS)[number]
@@ -24,7 +26,10 @@ export interface RequestDraft {
   url: string
   params: HttpParam[]
   headers: HttpHeader[]
-  body: string
+  body: {
+    data: string
+    language: LanguageBody
+  }
   documentation: string
 }
 
@@ -35,7 +40,10 @@ export interface RequestFile {
   url: string
   params: HttpParam[]
   headers: HttpHeader[]
-  body: string
+  body: {
+    data: string
+    language: LanguageBody
+  }
   documentation: string
 }
 

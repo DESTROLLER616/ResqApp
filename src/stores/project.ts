@@ -147,7 +147,10 @@ export const useProjectStore = defineStore('project', () => {
       parentRelative,
       requestName,
       {
-        body: '',
+        body: {
+          data: '',
+          language: 'JSON',
+        },
         documentation: '',
         headers: [],
         method: httpMethod,

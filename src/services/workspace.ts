@@ -14,7 +14,10 @@ function toFile(draft: RequestDraft): RequestFile {
     url: draft.url,
     params: draft.params,
     headers: draft.headers,
-    body: draft.body,
+    body: {
+      data: draft.body.data,
+      language: draft.body.language,
+    },
     documentation: draft.documentation,
   }
 }
@@ -27,7 +30,7 @@ function fromFile(relativePath: string, file: RequestFile): RequestDraft {
     url: file.url,
     params: file.params ?? [],
     headers: file.headers ?? [],
-    body: file.body ?? '',
+    body: file.body ?? { data: '', language: 'JSON' },
     documentation: file.documentation ?? '',
   }
 }

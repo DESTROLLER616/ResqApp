@@ -12,9 +12,49 @@ pub enum HttpMethod {
     Options,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum HttpLanguageBody {
+    Html,
+    Json,
+    Xml
+}
+
 impl Default for HttpMethod {
     fn default() -> Self {
         Self::Get
+    }
+}
+
+impl std::fmt::Display for HttpLanguageBody {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            HttpLanguageBody::Html => write!(f, "html"),
+            HttpLanguageBody::Json => write!(f, "json"),
+            HttpLanguageBody::Xml => write!(f, "xml")
+        }
+    }
+}
+
+impl Default for HttpLanguageBody {
+    fn default() -> Self {
+        Self::Json
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestBody {
+    pub data: String,
+    pub language: HttpLanguageBody,
+}
+
+impl Default for RequestBody {
+    fn default() -> Self {
+        Self { 
+            data: (String::new()), 
+            language: (HttpLanguageBody::Json)
+        }
     }
 }
 
@@ -47,7 +87,7 @@ pub struct RequestDraft {
     #[serde(default)]
     pub headers: Vec<HttpHeader>,
     #[serde(default)]
-    pub body: String,
+    pub body: RequestBody,
     #[serde(default)]
     pub documentation: String,
 }
@@ -60,7 +100,10 @@ impl RequestDraft {
             url: String::new(),
             params: Vec::new(),
             headers: Vec::new(),
-            body: String::new(),
+            body: RequestBody { 
+                data: (String::new()),
+                language: (HttpLanguageBody::Json)
+            },
             documentation: String::new(),
         }
     }

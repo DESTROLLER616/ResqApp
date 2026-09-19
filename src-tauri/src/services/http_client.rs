@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::time::Instant;
 
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
@@ -36,10 +37,12 @@ fn build_url(draft: &RequestDraft) -> Result<Url> {
 
 fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
     let mut headers = HeaderMap::new();
+
     for header in &draft.headers {
         if !header.enabled || header.key.is_empty() {
             continue;
         }
+
         let name = HeaderName::from_bytes(header.key.as_bytes())
             .map_err(|err| AppError::message(format!("invalid header name '{}': {err}", header.key)))?;
         let value = HeaderValue::from_str(&header.value).map_err(|err| {
@@ -47,6 +50,15 @@ fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
         })?;
         headers.append(name, value);
     }
+
+    if !headers.contains_key("Content-Type") {
+        let value = HeaderValue::from_str(&draft.body.language.to_string()).map_err(|e| {
+            AppError::message(format!("invalid header value for '{}': {e}", "Content-Type"))
+        })?;
+
+        headers.append("Content-Type", value);
+    }
+
     Ok(headers)
 }
 
@@ -58,7 +70,7 @@ pub async fn send_request(draft: &RequestDraft) -> Result<HttpResponse> {
 
     let mut request = client.request(method.clone(), url).headers(headers);
     if method != Method::GET && method != Method::HEAD {
-        request = request.body(draft.body.clone());
+        request = request.body(draft.body.data.clone());
     }
 
     let start = Instant::now();

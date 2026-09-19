@@ -75,6 +75,7 @@
     "params": "Parámetros",
     "headers": "Cabeceras",
     "body": "Cuerpo",
+    "bodyLanguage": "Lenguaje del cuerpo",
     "documentation": "Documentación",
     "documentationPlaceholder": "Escribe la documentación de la petición...",
     "response": "Respuesta",
@@ -91,7 +92,8 @@
       "headers": "Sin cabeceras en la respuesta"
     },
     "error": {
-      "sendFailed": "No se pudo enviar la petición"
+      "sendFailed": "No se pudo enviar la petición",
+      "bodySyntaxError": "Error de sintaxis"
     },
     "table": {
       "name": "Nombre",

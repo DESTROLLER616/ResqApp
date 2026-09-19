@@ -2,7 +2,7 @@ import { h, type VNodeChild } from 'vue'
 import type { SelectOption } from 'naive-ui'
 import { HTTP_METHODS, type HttpMethod } from '@/types/http'
 
-const METHOD_COLORS: Record<HttpMethod, string> = {
+export const METHOD_COLORS: Record<HttpMethod, string> = {
   GET: '#10b981',
   POST: '#3b82f6',
   PUT: '#f59e0b',

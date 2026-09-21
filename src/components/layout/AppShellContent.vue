@@ -35,6 +35,28 @@ const {
   max: SIDEBAR_MAX_DEFAULT,
 })
 
+const {
+  size: recentWidth,
+  resizeBy: resizeRecentBy,
+  setMax: setRecentMax,
+} = useResizableSize({
+  initial: 220,
+  min: SIDEBAR_MIN,
+  max: SIDEBAR_MAX_DEFAULT,
+})
+
+function projectOccupied(): number {
+  return isProjectSidebarVisible.value ? siderWidth.value : 0
+}
+function updateRecentMax(): void {
+  const shellWidth = shellRef.value?.clientWidth ?? window.innerWidth
+  setRecentMax(Math.max(SIDEBAR_MIN, shellWidth - MAIN_MIN - projectOccupied()))
+}
+function onRecentDrag(delta: number): void {
+  updateRecentMax()
+  resizeRecentBy(-delta)
+}
+
 function updateSidebarMax(): void {
   const shellWidth = shellRef.value?.clientWidth ?? window.innerWidth
   const recentWidth = isRecentSidebarVisible.value ? RECENT_WIDTH : 0
@@ -86,13 +108,15 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
       </div>
     </main>
 
-    <aside
-      v-if="isRecentSidebarVisible"
-      class="app-shell__recent"
-      :style="{ width: `${RECENT_WIDTH}px` }"
-    >
-      <RecentProjectsSidebar />
-    </aside>
+    <template v-if="isRecentSidebarVisible">
+      <ResizeHandle orientation="vertical" @drag="onRecentDrag" />
+      <aside
+        class="app-shell__sider"
+        :style="{ width: `${recentWidth}px`, flexBasis: `${recentWidth}px` }"
+      >
+        <RecentProjectsSidebar />
+      </aside>
+    </template>
   </div>
 
   <ProjectLifecycleModals />

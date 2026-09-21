@@ -19,6 +19,7 @@ import { useI18n } from 'vue-i18n'
 import { methodOptions, renderMethodLabel } from './request-method-options'
 import { buildCompleteUrl, mergeParamsFromUrlSearch } from '../utils/request-url'
 import { useResponsePanelSize } from '../composables/use-response-panel-size'
+import { METHOD_COLORS } from './request-method-options'
 
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
@@ -39,7 +40,6 @@ const isBodyDisabled = computed(() => {
   return method !== undefined && METHODS_WITHOUT_BODY.has(method)
 })
 
-/** Local input value so URL normalization does not fight caret while typing. */
 const urlDraft = ref('')
 let skipParamsUrlSync = false
 
@@ -87,6 +87,14 @@ function updateUrl(raw: string): void {
     // Incomplete URL while typing — keep draft as typed; do not touch params.
     projectStore.updateActiveRequest({ url: raw })
   }
+}
+
+function statusColor(status: number): string {
+  if (status >= 500) return METHOD_COLORS.DELETE
+  if (status >= 400) return METHOD_COLORS.PUT
+  if (status >= 300) return METHOD_COLORS.POST
+  if (status >= 200) return METHOD_COLORS.GET
+  return METHOD_COLORS.HEAD
 }
 
 watch(isBodyDisabled, (disabled) => {
@@ -178,7 +186,10 @@ watch(
               display-directive="show:lazy"
               class="request-panel__body-pane"
             >
-              <RequestBodyEditor :body="activeDraft.body" />
+              <RequestBodyEditor
+                :body="activeDraft.body.data"
+                :language="activeDraft.body.language"
+              />
             </n-tab-pane>
             <n-tab-pane
               name="documentation"
@@ -207,7 +218,9 @@ watch(
         </div>
         <div v-else class="request-panel__response-content">
           <div class="request-panel__meta">
-            <n-text strong>{{ response.status }} {{ response.statusText }}</n-text>
+            <n-text :style="{ color: statusColor(response.status) }" strong
+              >{{ response.status }} {{ response.statusText }}</n-text
+            >
             <n-text depth="3"
               >{{ response.elapsedMs }} ms |
               {{ formatBytes(Number(response.headers['content-length'] ?? 0)) }}</n-text

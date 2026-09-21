@@ -75,6 +75,7 @@
     "params": "Parameters",
     "headers": "Headers",
     "body": "Body",
+    "bodyLanguage": "Body language",
     "documentation": "Documentation",
     "documentationPlaceholder": "Write the request documentation...",
     "response": "Response",
@@ -91,7 +92,8 @@
       "headers": "No headers in the response"
     },
     "error": {
-      "sendFailed": "Could not send the request"
+      "sendFailed": "Could not send the request",
+      "bodySyntaxError": "Syntax error"
     },
     "table": {
       "name": "Name",

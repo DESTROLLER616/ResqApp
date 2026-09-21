@@ -11,11 +11,19 @@ import { entryName, parentOf } from '@/utils/project-tree'
 const SAVE_DEBOUNCE_MS = 300
 
 function ensureDraftShape(draft: RequestDraft): RequestDraft {
+  const body =
+    draft.body && typeof draft.body === 'object'
+      ? {
+          data: draft.body.data ?? '',
+          language: draft.body.language ?? 'JSON',
+        }
+      : { data: '', language: 'JSON' as const }
+
   return {
     ...draft,
     params: draft.params ?? [],
     headers: draft.headers ?? [],
-    body: draft.body ?? '',
+    body,
     documentation: draft.documentation ?? '',
   }
 }
@@ -147,7 +155,10 @@ export const useProjectStore = defineStore('project', () => {
       parentRelative,
       requestName,
       {
-        body: '',
+        body: {
+          data: '',
+          language: 'JSON',
+        },
         documentation: '',
         headers: [],
         method: httpMethod,

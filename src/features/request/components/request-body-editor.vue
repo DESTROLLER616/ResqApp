@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { NSelect, type SelectOption } from 'naive-ui'
 import { basicSetup } from 'codemirror'
-import { Compartment } from '@codemirror/state'
+import { Compartment, type Extension } from '@codemirror/state'
 import { EditorView, keymap, placeholder, type ViewUpdate } from '@codemirror/view'
 import { json } from '@codemirror/lang-json'
 import { html } from '@codemirror/lang-html'
@@ -40,8 +40,9 @@ const languageCompartment = new Compartment()
 const lintCompartment = new Compartment()
 const themeCompartment = new Compartment()
 let view: EditorView | null = null
+let resizeObserver: ResizeObserver | null = null
 
-function languageExtension(language: LanguageBody) {
+function languageExtension(language: LanguageBody): Extension {
   switch (language) {
     case 'JSON':
       return json()
@@ -49,10 +50,12 @@ function languageExtension(language: LanguageBody) {
       return html()
     case 'XML':
       return xml()
+    case 'TEXT':
+      return []
   }
 }
 
-function lintExtension(language: LanguageBody) {
+function lintExtension(language: LanguageBody): Extension {
   const config = { delay: LINT_DELAY_MS }
   switch (language) {
     case 'JSON':
@@ -63,7 +66,17 @@ function lintExtension(language: LanguageBody) {
         syntaxErrorLinter(() => t('request.error.bodySyntaxError')),
         config,
       )
+    case 'TEXT':
+      return []
   }
+}
+
+function editorSizeExtension(): Extension {
+  return EditorView.theme({
+    '&': { height: '100%', maxHeight: '100%' },
+    '.cm-scroller': { overflow: 'auto' },
+    '.cm-content': { minHeight: '100%' },
+  })
 }
 
 function themeExtension(theme: 'light' | 'dark') {
@@ -100,16 +113,18 @@ function onDocChanged(update: ViewUpdate): void {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await nextTick()
   if (!hostRef.value) return
 
   view = new EditorView({
     parent: hostRef.value,
-    doc: props.body,
+    doc: props.body ?? '',
     extensions: [
       basicSetup,
       keymap.of([indentWithTab]),
       placeholder('{}'),
+      editorSizeExtension(),
       languageCompartment.of(languageExtension(props.language)),
       lintCompartment.of(lintExtension(props.language)),
       lintGutter(),
@@ -118,6 +133,11 @@ onMounted(() => {
       EditorView.lineWrapping,
     ],
   })
+
+  resizeObserver = new ResizeObserver(() => {
+    view?.requestMeasure()
+  })
+  resizeObserver.observe(hostRef.value)
 })
 
 watch(
@@ -150,6 +170,8 @@ watch(resolvedTheme, (theme) => {
 })
 
 onUnmounted(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
   view?.destroy()
   view = null
 })
@@ -161,6 +183,7 @@ onUnmounted(() => {
       <n-select
         class="body-editor__language"
         size="small"
+        to="body"
         :value="language"
         :options="languageOptions"
         :consistent-menu-width="false"
@@ -168,7 +191,7 @@ onUnmounted(() => {
         @update:value="updateLanguage"
       />
     </div>
-    <div ref="hostRef" class="body-editor__host" />
+    <div ref="hostRef" class="body-editor__host"></div>
   </div>
 </template>
 
@@ -176,12 +199,14 @@ onUnmounted(() => {
 .body-editor {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
 }
 
 .body-editor__toolbar {
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
@@ -193,13 +218,20 @@ onUnmounted(() => {
 }
 
 .body-editor__host {
-  flex: 1;
+  position: relative;
+  z-index: 0;
+  flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .body-editor__host :deep(.cm-editor) {
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
+  width: 100%;
 }
 
 .body-editor__host :deep(.cm-scroller) {

@@ -1,7 +1,6 @@
-use std::str::FromStr;
 use std::time::Instant;
 
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue, CONTENT_TYPE};
 use reqwest::{Method, Url};
 
 use crate::domain::http::HttpResponse;
@@ -18,6 +17,10 @@ fn to_method(method: &HttpMethod) -> Method {
         HttpMethod::Head => Method::HEAD,
         HttpMethod::Options => Method::OPTIONS,
     }
+}
+
+fn method_sends_body(method: &HttpMethod) -> bool {
+    !matches!(method, HttpMethod::Get | HttpMethod::Head)
 }
 
 fn build_url(draft: &RequestDraft) -> Result<Url> {
@@ -51,12 +54,11 @@ fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
         headers.append(name, value);
     }
 
-    if !headers.contains_key("Content-Type") {
-        let value = HeaderValue::from_str(&draft.body.language.to_string()).map_err(|e| {
-            AppError::message(format!("invalid header value for '{}': {e}", "Content-Type"))
-        })?;
-
-        headers.append("Content-Type", value);
+    if method_sends_body(&draft.method) && !headers.contains_key(CONTENT_TYPE) {
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_static(draft.body.language.content_type()),
+        );
     }
 
     Ok(headers)
@@ -69,7 +71,7 @@ pub async fn send_request(draft: &RequestDraft) -> Result<HttpResponse> {
     let method = to_method(&draft.method);
 
     let mut request = client.request(method.clone(), url).headers(headers);
-    if method != Method::GET && method != Method::HEAD {
+    if method_sends_body(&draft.method) {
         request = request.body(draft.body.data.clone());
     }
 

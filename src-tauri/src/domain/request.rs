@@ -17,7 +17,8 @@ pub enum HttpMethod {
 pub enum HttpLanguageBody {
     Html,
     Json,
-    Xml
+    Xml,
+    Text,
 }
 
 impl Default for HttpMethod {
@@ -26,12 +27,13 @@ impl Default for HttpMethod {
     }
 }
 
-impl std::fmt::Display for HttpLanguageBody {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl HttpLanguageBody {
+    pub fn content_type(&self) -> &'static str {
         match self {
-            HttpLanguageBody::Html => write!(f, "html"),
-            HttpLanguageBody::Json => write!(f, "json"),
-            HttpLanguageBody::Xml => write!(f, "xml")
+            Self::Html => "text/html",
+            Self::Json => "application/json",
+            Self::Xml => "application/xml",
+            Self::Text => "text/plain",
         }
     }
 }

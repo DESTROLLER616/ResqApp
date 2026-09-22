@@ -13,7 +13,7 @@ import {
   useMessage,
 } from 'naive-ui'
 import type { TreeOption } from 'naive-ui'
-import { FolderOpen, FolderPlus, FileAlt } from '@vicons/fa'
+import { FolderOpen, FolderPlus, FileAlt, Cog } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
 import ProjectEntryModals from '@/features/project/components/ProjectEntryModals.vue'
@@ -32,7 +32,7 @@ const { t } = useI18n()
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 const { tree, name, hasProject, rootPath } = storeToRefs(projectStore)
-const { activeRequestPath } = storeToRefs(workspaceStore)
+const { activeRequestPath, activePanel } = storeToRefs(workspaceStore)
 const message = useMessage()
 
 const search = ref('')
@@ -66,6 +66,9 @@ const { openCreate, contextMenu, dropdownOptions, nodeProps, onDropdownSelect, c
   useProjectTreeActions()
 
 const selectedKeys = computed(() => {
+  if (activePanel.value === 'documentation') {
+    return []
+  }
   if (activeRequestPath.value) {
     return [requestTreeKey(activeRequestPath.value)]
   }
@@ -96,6 +99,11 @@ async function onSelect(keys: Array<string | number>) {
   } catch (e) {
     message.error(toErrorMessage(e))
   }
+}
+
+async function openDocumentation(): Promise<void> {
+  await projectStore.flushSave()
+  workspaceStore.openDocumentation(t('project.documentation.title'))
 }
 </script>
 
@@ -132,6 +140,21 @@ async function onSelect(keys: Array<string | number>) {
             </n-button>
           </template>
           {{ t('project.actions.newRequest') }}
+        </n-tooltip>
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-button
+              size="tiny"
+              :quaternary="activePanel !== 'documentation'"
+              :type="activePanel === 'documentation' ? 'primary' : 'default'"
+              @click="openDocumentation"
+            >
+              <template #icon>
+                <n-icon :component="Cog" />
+              </template>
+            </n-button>
+          </template>
+          {{ t('project.settings') }}
         </n-tooltip>
       </n-space>
     </div>

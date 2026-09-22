@@ -20,6 +20,10 @@
   "project": {
     "untitled": "Project",
     "settings": "Settings",
+    "documentation": {
+      "title": "Documentation",
+      "placeholder": "Write the project documentation..."
+    },
     "actions": {
       "newFolder": "New folder",
       "newRequest": "New request"
@@ -71,6 +75,9 @@
     "params": "Parameters",
     "headers": "Headers",
     "body": "Body",
+    "bodyLanguage": "Body language",
+    "documentation": "Documentation",
+    "documentationPlaceholder": "Write the request documentation...",
     "response": "Response",
     "actions": {
       "send": "Send request",
@@ -85,7 +92,8 @@
       "headers": "No headers in the response"
     },
     "error": {
-      "sendFailed": "Could not send the request"
+      "sendFailed": "Could not send the request",
+      "bodySyntaxError": "Syntax error"
     },
     "table": {
       "name": "Name",

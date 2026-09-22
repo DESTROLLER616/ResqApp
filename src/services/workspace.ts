@@ -14,7 +14,11 @@ function toFile(draft: RequestDraft): RequestFile {
     url: draft.url,
     params: draft.params,
     headers: draft.headers,
-    body: draft.body,
+    body: {
+      data: draft.body.data,
+      language: draft.body.language,
+    },
+    documentation: draft.documentation,
   }
 }
 
@@ -26,7 +30,8 @@ function fromFile(relativePath: string, file: RequestFile): RequestDraft {
     url: file.url,
     params: file.params ?? [],
     headers: file.headers ?? [],
-    body: file.body ?? '',
+    body: file.body ?? { data: '', language: 'JSON' },
+    documentation: file.documentation ?? '',
   }
 }
 
@@ -52,6 +57,16 @@ export async function initProject(path: string, name?: string): Promise<OpenedPr
 
 export async function refreshProject(path: string): Promise<OpenedProject> {
   return invoke<OpenedProject>('refresh_project', { path })
+}
+
+export async function writeProjectDocumentation(
+  projectRoot: string,
+  documentation: string,
+): Promise<void> {
+  await invoke('write_project_documentation', {
+    projectRoot,
+    documentation,
+  })
 }
 
 export async function createFolder(

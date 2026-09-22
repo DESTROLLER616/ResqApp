@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import type { HttpResponse, RequestDraft, RequestFile } from '@/types/http'
 
-function toRequestFile(draft: RequestDraft): RequestFile {
+function toRequestFile(draft: RequestDraft): Omit<RequestFile, 'documentation'> {
   return {
     name: draft.name,
     method: draft.method,

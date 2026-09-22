@@ -20,6 +20,10 @@
   "project": {
     "untitled": "Proyecto",
     "settings": "Configuración",
+    "documentation": {
+      "title": "Documentación",
+      "placeholder": "Escribe la documentación del proyecto..."
+    },
     "actions": {
       "newFolder": "Nueva carpeta",
       "newRequest": "Nueva petición"
@@ -71,6 +75,9 @@
     "params": "Parámetros",
     "headers": "Cabeceras",
     "body": "Cuerpo",
+    "bodyLanguage": "Lenguaje del cuerpo",
+    "documentation": "Documentación",
+    "documentationPlaceholder": "Escribe la documentación de la petición...",
     "response": "Respuesta",
     "actions": {
       "send": "Enviar petición",
@@ -85,7 +92,8 @@
       "headers": "Sin cabeceras en la respuesta"
     },
     "error": {
-      "sendFailed": "No se pudo enviar la petición"
+      "sendFailed": "No se pudo enviar la petición",
+      "bodySyntaxError": "Error de sintaxis"
     },
     "table": {
       "name": "Nombre",

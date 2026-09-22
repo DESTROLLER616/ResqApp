@@ -75,6 +75,18 @@ pub fn refresh_project(path: String) -> Result<OpenedProject, String> {
 }
 
 #[tauri::command]
+pub fn write_project_documentation(
+    project_root: String,
+    documentation: String,
+) -> Result<(), String> {
+    request_fs::write_project_documentation(
+        PathBuf::from(project_root).as_path(),
+        &documentation,
+    )
+    .map_err(map_err)
+}
+
+#[tauri::command]
 pub fn create_folder(
     project_root: String,
     parent_relative: String,

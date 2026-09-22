@@ -3,7 +3,7 @@
   "description": "A desktop HTTP client for composing, organizing, and sending API requests.",
   "keywords": [
     "http",
-    "http cliient",
+    "http client",
     "resq",
     "resqapp"
   ],
@@ -13,7 +13,7 @@
     "email": "destroller@protonmail.com"
   },
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {

@@ -5,12 +5,14 @@ import ProjectLifecycleModals from '@/features/project/components/ProjectLifecyc
 import ProjectSidebar from '@/features/project/components/ProjectSidebar.vue'
 import RecentProjectsSidebar from '@/features/project/components/RecentProjectsSidebar.vue'
 import RequestTabs from '@/features/project/components/RequestTabs.vue'
+import ProjectDocumentationEditor from '@/features/project/components/ProjectDocumentationEditor.vue'
 import RequestPanel from '@/features/request/components/RequestPanel.vue'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useAppMenu } from '@/composables/use-app-menu'
 import { useResizableSize } from '@/composables/use-resizable-size'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useUiStore } from '@/stores/ui'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 const SIDEBAR_MIN = 180
 const SIDEBAR_MAX_DEFAULT = 520
@@ -18,7 +20,9 @@ const MAIN_MIN = 360
 const RECENT_WIDTH = 220
 
 const uiStore = useUiStore()
+const workspaceStore = useWorkspaceStore()
 const { isProjectSidebarVisible, isRecentSidebarVisible } = storeToRefs(uiStore)
+const { activePanel } = storeToRefs(workspaceStore)
 
 const shellRef = useTemplateRef<HTMLElement>('shell')
 const {
@@ -30,6 +34,28 @@ const {
   min: SIDEBAR_MIN,
   max: SIDEBAR_MAX_DEFAULT,
 })
+
+const {
+  size: recentWidth,
+  resizeBy: resizeRecentBy,
+  setMax: setRecentMax,
+} = useResizableSize({
+  initial: 220,
+  min: SIDEBAR_MIN,
+  max: SIDEBAR_MAX_DEFAULT,
+})
+
+function projectOccupied(): number {
+  return isProjectSidebarVisible.value ? siderWidth.value : 0
+}
+function updateRecentMax(): void {
+  const shellWidth = shellRef.value?.clientWidth ?? window.innerWidth
+  setRecentMax(Math.max(SIDEBAR_MIN, shellWidth - MAIN_MIN - projectOccupied()))
+}
+function onRecentDrag(delta: number): void {
+  updateRecentMax()
+  resizeRecentBy(-delta)
+}
 
 function updateSidebarMax(): void {
   const shellWidth = shellRef.value?.clientWidth ?? window.innerWidth
@@ -77,17 +103,20 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
     <main class="app-shell__main">
       <RequestTabs />
       <div class="app-shell__panel">
-        <RequestPanel />
+        <ProjectDocumentationEditor v-if="activePanel === 'documentation'" />
+        <RequestPanel v-else />
       </div>
     </main>
 
-    <aside
-      v-if="isRecentSidebarVisible"
-      class="app-shell__recent"
-      :style="{ width: `${RECENT_WIDTH}px` }"
-    >
-      <RecentProjectsSidebar />
-    </aside>
+    <template v-if="isRecentSidebarVisible">
+      <ResizeHandle orientation="vertical" @drag="onRecentDrag" />
+      <aside
+        class="app-shell__sider"
+        :style="{ width: `${recentWidth}px`, flexBasis: `${recentWidth}px` }"
+      >
+        <RecentProjectsSidebar />
+      </aside>
+    </template>
   </div>
 
   <ProjectLifecycleModals />

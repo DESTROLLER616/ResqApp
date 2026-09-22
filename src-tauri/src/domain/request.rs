@@ -12,9 +12,51 @@ pub enum HttpMethod {
     Options,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum HttpLanguageBody {
+    Html,
+    Json,
+    Xml,
+    Text,
+}
+
 impl Default for HttpMethod {
     fn default() -> Self {
         Self::Get
+    }
+}
+
+impl HttpLanguageBody {
+    pub fn content_type(&self) -> &'static str {
+        match self {
+            Self::Html => "text/html",
+            Self::Json => "application/json",
+            Self::Xml => "application/xml",
+            Self::Text => "text/plain",
+        }
+    }
+}
+
+impl Default for HttpLanguageBody {
+    fn default() -> Self {
+        Self::Json
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestBody {
+    pub data: String,
+    pub language: HttpLanguageBody,
+}
+
+impl Default for RequestBody {
+    fn default() -> Self {
+        Self { 
+            data: (String::new()), 
+            language: (HttpLanguageBody::Json)
+        }
     }
 }
 
@@ -47,7 +89,9 @@ pub struct RequestDraft {
     #[serde(default)]
     pub headers: Vec<HttpHeader>,
     #[serde(default)]
-    pub body: String,
+    pub body: RequestBody,
+    #[serde(default)]
+    pub documentation: String,
 }
 
 impl RequestDraft {
@@ -58,7 +102,11 @@ impl RequestDraft {
             url: String::new(),
             params: Vec::new(),
             headers: Vec::new(),
-            body: String::new(),
+            body: RequestBody { 
+                data: (String::new()),
+                language: (HttpLanguageBody::Json)
+            },
+            documentation: String::new(),
         }
     }
 }

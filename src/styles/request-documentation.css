@@ -1,0 +1,22 @@
+.request-documentation {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.request-documentation__hint {
+  flex-shrink: 0;
+  padding: 0 0 8px;
+}
+
+.request-documentation__editor {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.request-documentation__editor :deep(.md-editor) {
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}

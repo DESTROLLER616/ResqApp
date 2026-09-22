@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue, CONTENT_TYPE};
 use reqwest::{Method, Url};
 
 use crate::domain::http::HttpResponse;
@@ -17,6 +17,10 @@ fn to_method(method: &HttpMethod) -> Method {
         HttpMethod::Head => Method::HEAD,
         HttpMethod::Options => Method::OPTIONS,
     }
+}
+
+fn method_sends_body(method: &HttpMethod) -> bool {
+    !matches!(method, HttpMethod::Get | HttpMethod::Head)
 }
 
 fn build_url(draft: &RequestDraft) -> Result<Url> {
@@ -36,10 +40,12 @@ fn build_url(draft: &RequestDraft) -> Result<Url> {
 
 fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
     let mut headers = HeaderMap::new();
+
     for header in &draft.headers {
         if !header.enabled || header.key.is_empty() {
             continue;
         }
+
         let name = HeaderName::from_bytes(header.key.as_bytes())
             .map_err(|err| AppError::message(format!("invalid header name '{}': {err}", header.key)))?;
         let value = HeaderValue::from_str(&header.value).map_err(|err| {
@@ -47,6 +53,14 @@ fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
         })?;
         headers.append(name, value);
     }
+
+    if method_sends_body(&draft.method) && !headers.contains_key(CONTENT_TYPE) {
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_static(draft.body.language.content_type()),
+        );
+    }
+
     Ok(headers)
 }
 
@@ -57,8 +71,8 @@ pub async fn send_request(draft: &RequestDraft) -> Result<HttpResponse> {
     let method = to_method(&draft.method);
 
     let mut request = client.request(method.clone(), url).headers(headers);
-    if method != Method::GET && method != Method::HEAD {
-        request = request.body(draft.body.clone());
+    if method_sends_body(&draft.method) {
+        request = request.body(draft.body.data.clone());
     }
 
     let start = Instant::now();

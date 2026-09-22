@@ -16,6 +16,7 @@ pub fn run() {
             commands::workspace::create_project,
             commands::workspace::init_project,
             commands::workspace::refresh_project,
+            commands::workspace::write_project_documentation,
             commands::workspace::create_folder,
             commands::workspace::create_request,
             commands::workspace::read_request,

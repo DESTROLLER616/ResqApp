@@ -75,7 +75,29 @@
     "params": "Parámetros",
     "headers": "Cabeceras",
     "body": "Cuerpo",
+    "bodyMode": "Tipo de cuerpo",
     "bodyLanguage": "Lenguaje del cuerpo",
+    "bodyModes": {
+      "raw": "Texto",
+      "formData": "Form data"
+    },
+    "form": {
+      "text": "Texto",
+      "file": "Archivo",
+      "image": "Imagen",
+      "noFile": "Sin archivo",
+      "project": "Proyecto",
+      "disk": "Disco",
+      "saveInProject": "Subir una copia o elegir un archivo del proyecto",
+      "useFromDisk": "Usar el archivo desde el disco",
+      "addField": "Agregar campo",
+      "uploadCopy": "Subir copia",
+      "projectFiles": "Archivos del proyecto",
+      "projectFilesEmpty": "Todavía no hay archivos. Sube una copia para reutilizarla en otras peticiones."
+    },
+    "dialog": {
+      "pickFile": "Elegir archivo"
+    },
     "documentation": "Documentación",
     "documentationPlaceholder": "Escribe la documentación de la petición...",
     "response": "Respuesta",
@@ -97,6 +119,7 @@
     },
     "table": {
       "name": "Nombre",
+      "type": "Tipo",
       "value": "Valor",
       "active": "Activo",
       "actions": "Acciones"

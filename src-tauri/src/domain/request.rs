@@ -44,18 +44,86 @@ impl Default for HttpLanguageBody {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum BodyMode {
+    Raw,
+    FormData,
+}
+
+impl Default for BodyMode {
+    fn default() -> Self {
+        Self::Raw
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum FormFieldKind {
+    Text,
+    File,
+}
+
+impl Default for FormFieldKind {
+    fn default() -> Self {
+        Self::Text
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum FormFileSource {
+    Project,
+    Disk,
+}
+
+impl Default for FormFileSource {
+    fn default() -> Self {
+        Self::Disk
+    }
+}
+
+fn default_enabled() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FormField {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub key: String,
+    #[serde(default)]
+    pub value: String,
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
+    #[serde(default)]
+    pub kind: FormFieldKind,
+    #[serde(default)]
+    pub source: FormFileSource,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestBody {
+    #[serde(default)]
+    pub mode: BodyMode,
+    #[serde(default)]
     pub data: String,
+    #[serde(default)]
     pub language: HttpLanguageBody,
+    #[serde(default)]
+    pub fields: Vec<FormField>,
 }
 
 impl Default for RequestBody {
     fn default() -> Self {
-        Self { 
-            data: (String::new()), 
-            language: (HttpLanguageBody::Json)
+        Self {
+            mode: BodyMode::Raw,
+            data: String::new(),
+            language: HttpLanguageBody::Json,
+            fields: Vec::new(),
         }
     }
 }
@@ -102,10 +170,7 @@ impl RequestDraft {
             url: String::new(),
             params: Vec::new(),
             headers: Vec::new(),
-            body: RequestBody { 
-                data: (String::new()),
-                language: (HttpLanguageBody::Json)
-            },
+            body: RequestBody::default(),
             documentation: String::new(),
         }
     }
@@ -126,4 +191,20 @@ pub enum ProjectNode {
         relative_path: String,
         method: HttpMethod,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{BodyMode, HttpLanguageBody, RequestBody};
+
+    #[test]
+    fn legacy_body_defaults_to_raw_text() {
+        let body: RequestBody =
+            serde_json::from_str(r#"{"data":"{\"ok\":true}","language":"JSON"}"#).unwrap();
+
+        assert_eq!(body.mode, BodyMode::Raw);
+        assert_eq!(body.language, HttpLanguageBody::Json);
+        assert_eq!(body.data, "{\"ok\":true}");
+        assert!(body.fields.is_empty());
+    }
 }

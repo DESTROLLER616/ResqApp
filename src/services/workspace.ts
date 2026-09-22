@@ -6,6 +6,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { RequestDraft, RequestFile } from '@/types/http'
 import type { OpenedProject, RecentProject } from '@/types/project'
+import { normalizeRequestBody } from '@/utils/request-body'
 
 function toFile(draft: RequestDraft): RequestFile {
   return {
@@ -14,10 +15,7 @@ function toFile(draft: RequestDraft): RequestFile {
     url: draft.url,
     params: draft.params,
     headers: draft.headers,
-    body: {
-      data: draft.body.data,
-      language: draft.body.language,
-    },
+    body: draft.body,
     documentation: draft.documentation,
   }
 }
@@ -30,7 +28,7 @@ function fromFile(relativePath: string, file: RequestFile): RequestDraft {
     url: file.url,
     params: file.params ?? [],
     headers: file.headers ?? [],
-    body: file.body ?? { data: '', language: 'JSON' },
+    body: normalizeRequestBody(file.body),
     documentation: file.documentation ?? '',
   }
 }

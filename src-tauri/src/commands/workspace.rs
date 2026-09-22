@@ -5,7 +5,7 @@ use tauri::AppHandle;
 use crate::domain::request::RequestDraft;
 use crate::domain::workspace::{OpenedProject, RecentProject};
 use crate::error::AppError;
-use crate::services::{request_fs, workspace_store};
+use crate::services::{attachments, request_fs, workspace_store};
 
 fn map_err(err: AppError) -> String {
     err.to_string()
@@ -58,8 +58,7 @@ pub fn init_project(
     path: String,
     name: Option<String>,
 ) -> Result<OpenedProject, String> {
-    let project =
-        request_fs::init_project(PathBuf::from(path).as_path(), name).map_err(map_err)?;
+    let project = request_fs::init_project(PathBuf::from(path).as_path(), name).map_err(map_err)?;
     workspace_store::touch_recent(
         &app,
         PathBuf::from(&project.root_path).as_path(),
@@ -79,11 +78,8 @@ pub fn write_project_documentation(
     project_root: String,
     documentation: String,
 ) -> Result<(), String> {
-    request_fs::write_project_documentation(
-        PathBuf::from(project_root).as_path(),
-        &documentation,
-    )
-    .map_err(map_err)
+    request_fs::write_project_documentation(PathBuf::from(project_root).as_path(), &documentation)
+        .map_err(map_err)
 }
 
 #[tauri::command]
@@ -117,15 +113,8 @@ pub fn create_request(
 }
 
 #[tauri::command]
-pub fn read_request(
-    project_root: String,
-    relative_path: String,
-) -> Result<RequestDraft, String> {
-    request_fs::read_request(
-        PathBuf::from(project_root).as_path(),
-        &relative_path,
-    )
-    .map_err(map_err)
+pub fn read_request(project_root: String, relative_path: String) -> Result<RequestDraft, String> {
+    request_fs::read_request(PathBuf::from(project_root).as_path(), &relative_path).map_err(map_err)
 }
 
 #[tauri::command]
@@ -157,15 +146,8 @@ pub fn rename_entry(
 }
 
 #[tauri::command]
-pub fn delete_entry(
-    project_root: String,
-    relative_path: String,
-) -> Result<OpenedProject, String> {
-    request_fs::delete_entry(
-        PathBuf::from(project_root).as_path(),
-        &relative_path,
-    )
-    .map_err(map_err)
+pub fn delete_entry(project_root: String, relative_path: String) -> Result<OpenedProject, String> {
+    request_fs::delete_entry(PathBuf::from(project_root).as_path(), &relative_path).map_err(map_err)
 }
 
 #[tauri::command]
@@ -178,6 +160,25 @@ pub fn move_entry(
         PathBuf::from(project_root).as_path(),
         &from_relative,
         &to_parent_relative,
+    )
+    .map_err(map_err)
+}
+
+#[tauri::command]
+pub fn list_request_attachments(
+    project_root: String,
+) -> Result<Vec<attachments::ProjectAttachment>, String> {
+    attachments::list_attachments(PathBuf::from(project_root).as_path()).map_err(map_err)
+}
+
+#[tauri::command]
+pub fn copy_request_attachment(
+    project_root: String,
+    source_path: String,
+) -> Result<String, String> {
+    attachments::copy_attachment(
+        PathBuf::from(project_root).as_path(),
+        PathBuf::from(source_path).as_path(),
     )
     .map_err(map_err)
 }

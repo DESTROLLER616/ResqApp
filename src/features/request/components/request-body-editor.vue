@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { NSelect, type SelectOption } from 'naive-ui'
 import { basicSetup } from 'codemirror'
 import { Compartment, type Extension } from '@codemirror/state'
@@ -15,15 +15,16 @@ import { useI18n } from 'vue-i18n'
 import { useProjectStore } from '@/stores/project'
 import { useUiStore } from '@/stores/ui'
 import { LANGUAGE_BODY, type LanguageBody } from '@/types/language-body'
+import type { BodyMode, RequestBody } from '@/types/http'
 import { jsonBodyLinter, syntaxErrorLinter } from '@/features/request/utils/body-linter'
+import RequestFormDataEditor from './request-form-data-editor.vue'
 
 const LINT_DELAY_MS = 300
 
 const REMOTE_SET_EVENT = 'set.remote'
 
 const props = defineProps<{
-  body: string
-  language: LanguageBody
+  body: RequestBody
 }>()
 
 const projectStore = useProjectStore()
@@ -34,6 +35,11 @@ const languageOptions: SelectOption[] = LANGUAGE_BODY.map((language) => ({
   label: language,
   value: language,
 }))
+
+const modeOptions = computed<SelectOption[]>(() => [
+  { label: t('request.bodyModes.raw'), value: 'raw' },
+  { label: t('request.bodyModes.formData'), value: 'formData' },
+])
 
 const hostRef = ref<HTMLDivElement | null>(null)
 const languageCompartment = new Compartment()
@@ -87,17 +93,36 @@ function isLanguageBody(value: unknown): value is LanguageBody {
   return typeof value === 'string' && (LANGUAGE_BODY as readonly string[]).includes(value)
 }
 
+function isBodyMode(value: unknown): value is BodyMode {
+  return value === 'raw' || value === 'formData'
+}
+
 function currentBodyData(): string {
-  return view?.state.doc.toString() ?? props.body
+  return view?.state.doc.toString() ?? props.body.data
+}
+
+function updateBody(patch: Partial<RequestBody>): void {
+  projectStore.updateActiveRequest({
+    body: {
+      ...props.body,
+      ...patch,
+    },
+  })
+}
+
+function updateMode(value: string): void {
+  if (!isBodyMode(value) || value === props.body.mode) return
+  updateBody({
+    mode: value,
+    data: currentBodyData(),
+  })
 }
 
 function updateLanguage(value: string): void {
-  if (!isLanguageBody(value) || value === props.language) return
-  projectStore.updateActiveRequest({
-    body: {
-      data: currentBodyData(),
-      language: value,
-    },
+  if (!isLanguageBody(value) || value === props.body.language) return
+  updateBody({
+    data: currentBodyData(),
+    language: value,
   })
 }
 
@@ -105,11 +130,8 @@ function onDocChanged(update: ViewUpdate): void {
   if (!update.docChanged) return
   if (update.transactions.every((tr) => tr.isUserEvent(REMOTE_SET_EVENT))) return
 
-  projectStore.updateActiveRequest({
-    body: {
-      data: update.state.doc.toString(),
-      language: props.language,
-    },
+  updateBody({
+    data: update.state.doc.toString(),
   })
 }
 
@@ -119,14 +141,14 @@ onMounted(async () => {
 
   view = new EditorView({
     parent: hostRef.value,
-    doc: props.body ?? '',
+    doc: props.body.data ?? '',
     extensions: [
       basicSetup,
       keymap.of([indentWithTab]),
       placeholder('{}'),
       editorSizeExtension(),
-      languageCompartment.of(languageExtension(props.language)),
-      lintCompartment.of(lintExtension(props.language)),
+      languageCompartment.of(languageExtension(props.body.language)),
+      lintCompartment.of(lintExtension(props.body.language)),
       lintGutter(),
       themeCompartment.of(themeExtension(resolvedTheme.value)),
       EditorView.updateListener.of(onDocChanged),
@@ -141,7 +163,7 @@ onMounted(async () => {
 })
 
 watch(
-  () => props.body,
+  () => props.body.data,
   (body) => {
     if (!view || view.state.doc.toString() === body) return
     view.dispatch({
@@ -152,7 +174,14 @@ watch(
 )
 
 watch(
-  () => props.language,
+  () => props.body.mode,
+  (mode) => {
+    if (mode === 'raw') view?.requestMeasure()
+  },
+)
+
+watch(
+  () => props.body.language,
   (language) => {
     view?.dispatch({
       effects: [
@@ -181,17 +210,29 @@ onUnmounted(() => {
   <div class="body-editor">
     <div class="body-editor__toolbar">
       <n-select
+        class="body-editor__mode"
+        size="small"
+        to="body"
+        :value="body.mode"
+        :options="modeOptions"
+        :consistent-menu-width="false"
+        :aria-label="t('request.bodyMode')"
+        @update:value="updateMode"
+      />
+      <n-select
+        v-if="body.mode === 'raw'"
         class="body-editor__language"
         size="small"
         to="body"
-        :value="language"
+        :value="body.language"
         :options="languageOptions"
         :consistent-menu-width="false"
         :aria-label="t('request.bodyLanguage')"
         @update:value="updateLanguage"
       />
     </div>
-    <div ref="hostRef" class="body-editor__host"></div>
+    <RequestFormDataEditor v-if="body.mode === 'formData'" :body="body" />
+    <div v-show="body.mode === 'raw'" ref="hostRef" class="body-editor__host"></div>
   </div>
 </template>
 
@@ -210,7 +251,12 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   padding: 4px 0 8px;
+}
+
+.body-editor__mode {
+  width: 140px;
 }
 
 .body-editor__language {

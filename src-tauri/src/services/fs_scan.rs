@@ -4,6 +4,7 @@ use std::path::Path;
 use crate::domain::request::{HttpMethod, ProjectNode, RequestDraft};
 use crate::domain::workspace::PROJECT_MARKER_FILE;
 use crate::error::{AppError, Result};
+use crate::services::attachments::ATTACHMENTS_DIR;
 
 fn read_request_method(path: &Path) -> HttpMethod {
     match fs::read_to_string(path) {
@@ -30,6 +31,9 @@ fn scan_dir(root: &Path, dir: &Path, relative: &str) -> Result<Vec<ProjectNode>>
     for entry in entries {
         let name = entry.file_name().to_string_lossy().to_string();
         if name.starts_with('.') {
+            continue;
+        }
+        if relative.is_empty() && name == ATTACHMENTS_DIR {
             continue;
         }
 

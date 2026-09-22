@@ -39,7 +39,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["appimage"],
+    "targets": ["appimage", "deb", "rpm"],
     "publisher": "Destroller",
     "homepage": "https://github.com/DESTROLLER616/ResqApp",
     "category": "DeveloperTool",

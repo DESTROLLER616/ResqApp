@@ -12,6 +12,12 @@ function toRequestFile(draft: RequestDraft): Omit<RequestFile, 'documentation'> 
   }
 }
 
-export async function sendHttpRequest(draft: RequestDraft): Promise<HttpResponse> {
-  return invoke<HttpResponse>('send_request', { draft: toRequestFile(draft) })
+export async function sendHttpRequest(
+  draft: RequestDraft,
+  projectRoot: string,
+): Promise<HttpResponse> {
+  return invoke<HttpResponse>('send_request', {
+    draft: toRequestFile(draft),
+    projectRoot,
+  })
 }

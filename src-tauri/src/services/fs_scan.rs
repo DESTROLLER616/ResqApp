@@ -15,7 +15,7 @@ fn read_request_method(path: &Path) -> HttpMethod {
     }
 }
 
-fn scan_dir(root: &Path, dir: &Path, relative: &str) -> Result<Vec<ProjectNode>> {
+fn scan_dir(dir: &Path, relative: &str) -> Result<Vec<ProjectNode>> {
     let mut entries = fs::read_dir(dir)?
         .filter_map(|entry| entry.ok())
         .collect::<Vec<_>>();
@@ -45,7 +45,7 @@ fn scan_dir(root: &Path, dir: &Path, relative: &str) -> Result<Vec<ProjectNode>>
         };
 
         if path.is_dir() {
-            let children = scan_dir(root, &path, &child_relative)?;
+            let children = scan_dir(&path, &child_relative)?;
             nodes.push(ProjectNode::Folder {
                 name,
                 relative_path: child_relative,
@@ -86,5 +86,5 @@ pub fn scan_project_tree(root: &Path) -> Result<Vec<ProjectNode>> {
             root.display()
         )));
     }
-    scan_dir(root, root, "")
+    scan_dir(root, "")
 }

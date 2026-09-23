@@ -24,6 +24,8 @@ pub fn run() {
             commands::workspace::rename_entry,
             commands::workspace::delete_entry,
             commands::workspace::move_entry,
+            commands::workspace::list_request_attachments,
+            commands::workspace::copy_request_attachment,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

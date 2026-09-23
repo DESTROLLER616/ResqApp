@@ -2,13 +2,13 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::domain::request::RequestDraft;
+use crate::domain::workspace::OpenedProject;
 use crate::domain::workspace::{ProjectMeta, PROJECT_MARKER_FILE};
 use crate::error::{AppError, Result};
 use crate::services::fs_scan::scan_project_tree;
 use crate::services::path_util::{
     canonicalize_existing, ensure_within_root, join_relative, resolve_relative, sanitize_entry_name,
 };
-use crate::domain::workspace::OpenedProject;
 
 pub fn marker_path(root: &Path) -> PathBuf {
     root.join(PROJECT_MARKER_FILE)
@@ -107,7 +107,11 @@ pub fn init_project(path: &Path, name: Option<String>) -> Result<OpenedProject> 
     open_project(&root)
 }
 
-pub fn create_folder(project_root: &Path, parent_relative: &str, name: &str) -> Result<OpenedProject> {
+pub fn create_folder(
+    project_root: &Path,
+    parent_relative: &str,
+    name: &str,
+) -> Result<OpenedProject> {
     let root = canonicalize_existing(project_root)?;
     let _ = read_project_meta(&root)?;
     let name = sanitize_entry_name(name)?;
@@ -193,11 +197,7 @@ pub fn read_request(project_root: &Path, relative_path: &str) -> Result<RequestD
     Ok(serde_json::from_str(&raw)?)
 }
 
-pub fn write_request(
-    project_root: &Path,
-    relative_path: &str,
-    draft: &RequestDraft,
-) -> Result<()> {
+pub fn write_request(project_root: &Path, relative_path: &str, draft: &RequestDraft) -> Result<()> {
     let root = canonicalize_existing(project_root)?;
     let relative = ensure_json_relative(relative_path)?;
     let path = resolve_relative(&root, &relative)?;
@@ -351,8 +351,7 @@ pub fn move_entry(
     if from_path.is_dir() {
         let from_canon = canonicalize_existing(&from_path)?;
         let dest_parent_canon = canonicalize_existing(&dest_parent_path)?;
-        if &dest_parent_canon == &from_canon
-            || dest_parent_canon.strip_prefix(&from_canon).is_ok()
+        if &dest_parent_canon == &from_canon || dest_parent_canon.strip_prefix(&from_canon).is_ok()
         {
             return Err(AppError::message(
                 "cannot move a folder into itself or a descendant",

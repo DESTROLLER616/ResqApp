@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::domain::http::HttpResponse;
 use crate::domain::request::RequestDraft;
 use crate::error::AppError;
@@ -8,6 +10,11 @@ fn map_err(err: AppError) -> String {
 }
 
 #[tauri::command]
-pub async fn send_request(draft: RequestDraft) -> Result<HttpResponse, String> {
-    http_client::send_request(&draft).await.map_err(map_err)
+pub async fn send_request(
+    draft: RequestDraft,
+    project_root: String,
+) -> Result<HttpResponse, String> {
+    http_client::send_request(&draft, Path::new(&project_root))
+        .await
+        .map_err(map_err)
 }

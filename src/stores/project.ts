@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { i18n } from '@/i18n'
 import * as workspaceService from '@/services/workspace'
 import type { HttpMethod, RequestDraft } from '@/types/http'
+import { emptyRequestBody, normalizeRequestBody } from '@/utils/request-body'
 import { isDocumentationTab, type OpenedProject, type ProjectTreeNode } from '@/types/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -11,19 +12,11 @@ import { entryName, parentOf } from '@/utils/project-tree'
 const SAVE_DEBOUNCE_MS = 300
 
 function ensureDraftShape(draft: RequestDraft): RequestDraft {
-  const body =
-    draft.body && typeof draft.body === 'object'
-      ? {
-          data: draft.body.data ?? '',
-          language: draft.body.language ?? 'JSON',
-        }
-      : { data: '', language: 'JSON' as const }
-
   return {
     ...draft,
     params: draft.params ?? [],
     headers: draft.headers ?? [],
-    body,
+    body: normalizeRequestBody(draft.body),
     documentation: draft.documentation ?? '',
   }
 }
@@ -155,10 +148,7 @@ export const useProjectStore = defineStore('project', () => {
       parentRelative,
       requestName,
       {
-        body: {
-          data: '',
-          language: 'JSON',
-        },
+        body: emptyRequestBody(),
         documentation: '',
         headers: [],
         method: httpMethod,

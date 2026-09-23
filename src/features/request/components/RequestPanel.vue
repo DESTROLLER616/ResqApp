@@ -45,11 +45,12 @@ let skipParamsUrlSync = false
 
 async function sendRequest() {
   const draft = projectStore.activeDraft
-  if (!draft) return
+  const projectRoot = projectStore.rootPath
+  if (!draft || !projectRoot) return
   responseError.value = null
   isSending.value = true
   try {
-    response.value = await makeRequest(draft)
+    response.value = await makeRequest(draft, projectRoot)
   } catch (error) {
     response.value = null
     responseError.value = error instanceof Error ? error.message : t('request.error.sendFailed')
@@ -186,10 +187,7 @@ watch(
               display-directive="show:lazy"
               class="request-panel__body-pane"
             >
-              <RequestBodyEditor
-                :body="activeDraft.body.data"
-                :language="activeDraft.body.language"
-              />
+              <RequestBodyEditor :body="activeDraft.body" />
             </n-tab-pane>
             <n-tab-pane
               name="documentation"

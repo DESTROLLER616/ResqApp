@@ -1,10 +1,10 @@
 # Security Policy
 
-Thank you for helping keep ReqCraft and its users safe. Please report security issues privately so we can fix them before they are public.
+Thank you for helping keep ResqApp and its users safe. Please report security issues privately so we can fix them before they are public.
 
 ## Supported versions
 
-ReqCraft is in early development (0.1.0). We only accept reports against the latest `main` branch (and the latest published release, when one exists).
+ResqApp is in early development (0.3.0). We only accept reports against the latest `main` branch (and the latest published release, when one exists).
 
 | Version                           | Supported |
 | --------------------------------- | --------- |
@@ -18,7 +18,7 @@ ReqCraft is in early development (0.1.0). We only accept reports against the lat
 Use one of these channels, in order of preference:
 
 1. **GitHub private advisory** — [Report a vulnerability](https://github.com/DESTROLLER616/http-client-app/security/advisories/new) (private vulnerability reporting).
-2. **Email** — [destroller@protonmail.com](mailto:destroller@protonmail.com) with the subject `SECURITY: ReqCraft`.
+2. **Email** — [destroller@protonmail.com](mailto:destroller@protonmail.com) with the subject `SECURITY: ResqApp`.
 
 If you do not get an acknowledgement within **7 days**, send a follow-up email with the same subject.
 
@@ -37,7 +37,7 @@ Please do not include full exploits against third-party services or data you do 
 
 ### In scope
 
-Issues in **this repository** that could harm ReqCraft users, including:
+Issues in **this repository** that could harm ResqApp users, including:
 
 - Path traversal, arbitrary file read/write, or access outside the opened project
 - Bypass of Tauri capabilities, IPC, or other desktop sandboxing
@@ -50,7 +50,7 @@ Issues in **this repository** that could harm ReqCraft users, including:
 ### Out of scope
 
 - Public issues that are not security bugs (use a normal GitHub issue)
-- Vulnerabilities in APIs, servers, or sites the user chooses to call with ReqCraft
+- Vulnerabilities in APIs, servers, or sites the user chooses to call with ResqApp
 - Secrets the user stored in project `.json` files on disk (that is how projects work), unless the app leaks them elsewhere
 - Reports against outdated or unofficial builds
 - Social engineering, physical access, or issues that require a fully compromised machine
@@ -81,4 +81,4 @@ We do not currently offer a bug bounty. A clear report and, if you want, a credi
 
 If you follow this policy, act in good faith, and avoid privacy violations, data destruction, and disruption of other people's systems, we will not pursue legal action related to your research.
 
-Do not access other people's data, accounts, or machines. Limit testing to your own environment and to ReqCraft itself.
+Do not access other people's data, accounts, or machines. Limit testing to your own environment and to ResqApp itself.

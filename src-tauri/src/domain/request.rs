@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum HttpMethod {
+    #[default]
     Get,
     Post,
     Put,
@@ -12,19 +13,14 @@ pub enum HttpMethod {
     Options,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum HttpLanguageBody {
+    #[default]
     Html,
     Json,
     Xml,
     Text,
-}
-
-impl Default for HttpMethod {
-    fn default() -> Self {
-        Self::Get
-    }
 }
 
 impl HttpLanguageBody {
@@ -38,56 +34,35 @@ impl HttpLanguageBody {
     }
 }
 
-impl Default for HttpLanguageBody {
-    fn default() -> Self {
-        Self::Json
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum BodyMode {
+    #[default]
     Raw,
     FormData,
 }
 
-impl Default for BodyMode {
-    fn default() -> Self {
-        Self::Raw
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum FormFieldKind {
+    #[default]
     Text,
     File,
 }
 
-impl Default for FormFieldKind {
-    fn default() -> Self {
-        Self::Text
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum FormFileSource {
+    #[default]
     Project,
     Disk,
-}
-
-impl Default for FormFileSource {
-    fn default() -> Self {
-        Self::Disk
-    }
 }
 
 fn default_enabled() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FormField {
     #[serde(default)]

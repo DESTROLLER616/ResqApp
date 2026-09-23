@@ -67,11 +67,7 @@ function onClose(name: string | number) {
       @update:value="onUpdateValue"
       @close="onClose"
     >
-      <n-tab-pane
-        v-for="tab in openTabs"
-        :key="tab.relativePath"
-        :name="tab.relativePath"
-      >
+      <n-tab-pane v-for="tab in openTabs" :key="tab.relativePath" :name="tab.relativePath">
         <template #tab>
           <span class="request-tabs__label">
             <n-icon v-if="isDocumentationTab(tab.relativePath)" :component="Cog" :size="12" />

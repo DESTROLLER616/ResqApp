@@ -36,7 +36,7 @@ pub fn ensure_within_root(root: &Path, candidate: &Path) -> Result<PathBuf> {
 pub fn resolve_relative(root: &Path, relative: &str) -> Result<PathBuf> {
     let relative = relative.trim_start_matches(['/', '\\']);
     if relative.is_empty() {
-        return Ok(canonicalize_existing(root)?);
+        return canonicalize_existing(root);
     }
 
     if Path::new(relative).components().any(|c| {

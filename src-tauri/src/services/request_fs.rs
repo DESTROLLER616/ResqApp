@@ -351,7 +351,7 @@ pub fn move_entry(
     if from_path.is_dir() {
         let from_canon = canonicalize_existing(&from_path)?;
         let dest_parent_canon = canonicalize_existing(&dest_parent_path)?;
-        if &dest_parent_canon == &from_canon || dest_parent_canon.strip_prefix(&from_canon).is_ok()
+        if dest_parent_canon == from_canon || dest_parent_canon.strip_prefix(&from_canon).is_ok()
         {
             return Err(AppError::message(
                 "cannot move a folder into itself or a descendant",

@@ -1,11 +1,16 @@
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, CONTENT_TYPE};
+use reqwest::multipart::{Form, Part};
 use reqwest::{Method, Url};
 
 use crate::domain::http::HttpResponse;
-use crate::domain::request::{HttpMethod, RequestDraft};
+use crate::domain::request::{
+    BodyMode, FormField, FormFieldKind, FormFileSource, HttpMethod, RequestDraft,
+};
 use crate::error::{AppError, Result};
+use crate::services::attachments;
 
 fn to_method(method: &HttpMethod) -> Method {
     match method {
@@ -46,12 +51,19 @@ fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
             continue;
         }
 
-        let name = HeaderName::from_bytes(header.key.as_bytes())
-            .map_err(|err| AppError::message(format!("invalid header name '{}': {err}", header.key)))?;
+        let name = HeaderName::from_bytes(header.key.as_bytes()).map_err(|err| {
+            AppError::message(format!("invalid header name '{}': {err}", header.key))
+        })?;
         let value = HeaderValue::from_str(&header.value).map_err(|err| {
             AppError::message(format!("invalid header value for '{}': {err}", header.key))
         })?;
         headers.append(name, value);
+    }
+
+    let sends_form = method_sends_body(&draft.method) && draft.body.mode == BodyMode::FormData;
+    if sends_form {
+        headers.remove(CONTENT_TYPE);
+        return Ok(headers);
     }
 
     if method_sends_body(&draft.method) && !headers.contains_key(CONTENT_TYPE) {
@@ -64,7 +76,74 @@ fn build_headers(draft: &RequestDraft) -> Result<HeaderMap> {
     Ok(headers)
 }
 
-pub async fn send_request(draft: &RequestDraft) -> Result<HttpResponse> {
+fn resolve_file_field(project_root: &Path, field: &FormField) -> Result<PathBuf> {
+    if field.value.trim().is_empty() {
+        return Err(AppError::message(format!(
+            "file field '{}' has no path",
+            field.key
+        )));
+    }
+
+    match field.source {
+        FormFileSource::Project => {
+            attachments::resolve_project_attachment(project_root, &field.value)
+        }
+        FormFileSource::Disk => {
+            let path = PathBuf::from(&field.value);
+            if !path.is_file() {
+                return Err(AppError::message(format!(
+                    "file not found: {}",
+                    field.value
+                )));
+            }
+            Ok(path)
+        }
+    }
+}
+
+fn part_file_name(field: &FormField, path: &Path) -> String {
+    let stored = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("file");
+    if field.source == FormFileSource::Project {
+        let prefix = format!("{}-", field.id);
+        if let Some(original) = stored.strip_prefix(&prefix) {
+            if !original.is_empty() {
+                return original.to_string();
+            }
+        }
+    }
+    stored.to_string()
+}
+
+async fn build_form(fields: &[FormField], project_root: &Path) -> Result<Form> {
+    let mut form = Form::new();
+    for field in fields {
+        if !field.enabled || field.key.is_empty() {
+            continue;
+        }
+
+        match field.kind {
+            FormFieldKind::Text => {
+                form = form.text(field.key.clone(), field.value.clone());
+            }
+            FormFieldKind::File => {
+                let path = resolve_file_field(project_root, field)?;
+                let bytes = tokio::fs::read(&path).await?;
+                let filename = part_file_name(field, &path);
+                let mime = mime_guess::from_path(&path).first_or_octet_stream();
+                let part = Part::bytes(bytes)
+                    .file_name(filename)
+                    .mime_str(mime.as_ref())?;
+                form = form.part(field.key.clone(), part);
+            }
+        }
+    }
+    Ok(form)
+}
+
+pub async fn send_request(draft: &RequestDraft, project_root: &Path) -> Result<HttpResponse> {
     let client = reqwest::Client::new();
     let url = build_url(draft)?;
     let headers = build_headers(draft)?;
@@ -72,7 +151,15 @@ pub async fn send_request(draft: &RequestDraft) -> Result<HttpResponse> {
 
     let mut request = client.request(method.clone(), url).headers(headers);
     if method_sends_body(&draft.method) {
-        request = request.body(draft.body.data.clone());
+        match draft.body.mode {
+            BodyMode::Raw => {
+                request = request.body(draft.body.data.clone());
+            }
+            BodyMode::FormData => {
+                let form = build_form(&draft.body.fields, project_root).await?;
+                request = request.multipart(form);
+            }
+        }
     }
 
     let start = Instant::now();
@@ -103,4 +190,46 @@ pub async fn send_request(draft: &RequestDraft) -> Result<HttpResponse> {
         body,
         elapsed_ms: start.elapsed().as_millis() as u64,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_headers;
+    use crate::domain::request::{BodyMode, HttpHeader, HttpMethod, RequestDraft};
+    use reqwest::header::CONTENT_TYPE;
+
+    fn draft(mode: BodyMode) -> RequestDraft {
+        let mut draft = RequestDraft::new_empty("sample");
+        draft.method = HttpMethod::Post;
+        draft.body.mode = mode;
+        draft.headers.push(HttpHeader {
+            id: "1".to_string(),
+            key: "Content-Type".to_string(),
+            value: "application/custom".to_string(),
+            enabled: true,
+        });
+        draft
+    }
+
+    #[test]
+    fn raw_body_keeps_a_user_content_type() {
+        let headers = build_headers(&draft(BodyMode::Raw)).unwrap();
+        let value = headers.get(CONTENT_TYPE).unwrap();
+        assert_eq!(value, "application/custom");
+    }
+
+    #[test]
+    fn form_data_drops_content_type_so_the_boundary_can_be_set() {
+        let headers = build_headers(&draft(BodyMode::FormData)).unwrap();
+        assert!(headers.get(CONTENT_TYPE).is_none());
+    }
+
+    #[test]
+    fn raw_body_sets_language_content_type_when_missing() {
+        let mut draft = RequestDraft::new_empty("sample");
+        draft.method = HttpMethod::Post;
+        let headers = build_headers(&draft).unwrap();
+        let value = headers.get(CONTENT_TYPE).unwrap();
+        assert_eq!(value, "application/json");
+    }
 }

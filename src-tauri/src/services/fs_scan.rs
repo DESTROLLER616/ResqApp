@@ -4,6 +4,7 @@ use std::path::Path;
 use crate::domain::request::{HttpMethod, ProjectNode, RequestDraft};
 use crate::domain::workspace::PROJECT_MARKER_FILE;
 use crate::error::{AppError, Result};
+use crate::services::attachments::ATTACHMENTS_DIR;
 
 fn read_request_method(path: &Path) -> HttpMethod {
     match fs::read_to_string(path) {
@@ -14,7 +15,7 @@ fn read_request_method(path: &Path) -> HttpMethod {
     }
 }
 
-fn scan_dir(root: &Path, dir: &Path, relative: &str) -> Result<Vec<ProjectNode>> {
+fn scan_dir(dir: &Path, relative: &str) -> Result<Vec<ProjectNode>> {
     let mut entries = fs::read_dir(dir)?
         .filter_map(|entry| entry.ok())
         .collect::<Vec<_>>();
@@ -32,6 +33,9 @@ fn scan_dir(root: &Path, dir: &Path, relative: &str) -> Result<Vec<ProjectNode>>
         if name.starts_with('.') {
             continue;
         }
+        if relative.is_empty() && name == ATTACHMENTS_DIR {
+            continue;
+        }
 
         let path = entry.path();
         let child_relative = if relative.is_empty() {
@@ -41,7 +45,7 @@ fn scan_dir(root: &Path, dir: &Path, relative: &str) -> Result<Vec<ProjectNode>>
         };
 
         if path.is_dir() {
-            let children = scan_dir(root, &path, &child_relative)?;
+            let children = scan_dir(&path, &child_relative)?;
             nodes.push(ProjectNode::Folder {
                 name,
                 relative_path: child_relative,
@@ -82,5 +86,5 @@ pub fn scan_project_tree(root: &Path) -> Result<Vec<ProjectNode>> {
             root.display()
         )));
     }
-    scan_dir(root, root, "")
+    scan_dir(root, "")
 }

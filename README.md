@@ -2,7 +2,7 @@
 
 A desktop HTTP client for composing, organizing, and sending API requests. Requests live as JSON files in a folder on disk, so you can keep them next to your code, share them, and version them with Git.
 
-Built with [Tauri 2](https://tauri.app/), [Vue 3](https://vuejs.org/), and [Rust](https://www.rust-lang.org/). Currently at **0.1.0** (early development).
+Built with [Tauri 2](https://tauri.app/), [Vue 3](https://vuejs.org/), and [Rust](https://www.rust-lang.org/). Currently at **0.3.0** (early development).
 
 ## Features
 

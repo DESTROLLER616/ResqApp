@@ -36,18 +36,12 @@ pub fn save(app: &AppHandle, config: &WorkspaceConfig) -> Result<()> {
     Ok(())
 }
 
-pub fn touch_recent(
-    app: &AppHandle,
-    path: &Path,
-    name: &str,
-) -> Result<Vec<RecentProject>> {
+pub fn touch_recent(app: &AppHandle, path: &Path, name: &str) -> Result<Vec<RecentProject>> {
     let mut config = load(app)?;
     let opened_at = chrono::Utc::now().to_rfc3339();
     let path_str = path.to_string_lossy().to_string();
 
-    config
-        .recent_projects
-        .retain(|item| item.path != path_str);
+    config.recent_projects.retain(|item| item.path != path_str);
 
     config.recent_projects.insert(
         0,

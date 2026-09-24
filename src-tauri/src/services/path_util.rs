@@ -36,13 +36,15 @@ pub fn ensure_within_root(root: &Path, candidate: &Path) -> Result<PathBuf> {
 pub fn resolve_relative(root: &Path, relative: &str) -> Result<PathBuf> {
     let relative = relative.trim_start_matches(['/', '\\']);
     if relative.is_empty() {
-        return Ok(canonicalize_existing(root)?);
+        return canonicalize_existing(root);
     }
 
-    if Path::new(relative)
-        .components()
-        .any(|c| matches!(c, Component::ParentDir | Component::RootDir | Component::Prefix(_)))
-    {
+    if Path::new(relative).components().any(|c| {
+        matches!(
+            c,
+            Component::ParentDir | Component::RootDir | Component::Prefix(_)
+        )
+    }) {
         return Err(AppError::InvalidPath(format!(
             "relative path must not contain '..' or absolute segments: {relative}"
         )));

@@ -75,7 +75,29 @@
     "params": "Parameters",
     "headers": "Headers",
     "body": "Body",
+    "bodyMode": "Body type",
     "bodyLanguage": "Body language",
+    "bodyModes": {
+      "raw": "Text",
+      "formData": "Form data"
+    },
+    "form": {
+      "text": "Text",
+      "file": "File",
+      "image": "Image",
+      "noFile": "No file",
+      "project": "Project",
+      "disk": "Disk",
+      "saveInProject": "Upload a copy or choose a file from the project",
+      "useFromDisk": "Use the file from disk",
+      "addField": "Add field",
+      "uploadCopy": "Upload copy",
+      "projectFiles": "Project files",
+      "projectFilesEmpty": "No files yet. Upload a copy to reuse it in other requests."
+    },
+    "dialog": {
+      "pickFile": "Choose file"
+    },
     "documentation": "Documentation",
     "documentationPlaceholder": "Write the request documentation...",
     "response": "Response",
@@ -97,6 +119,7 @@
     },
     "table": {
       "name": "Name",
+      "type": "Type",
       "value": "Value",
       "active": "Active",
       "actions": "Actions"

@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useI18n } from 'vue-i18n'
 import {
-  NConfigProvider,
   darkTheme,
   dateEnUS,
   dateEsAR,
   enUS,
   esAR,
   type GlobalThemeOverrides,
+  NConfigProvider,
   type NDateLocale,
   type NLocale,
 } from 'naive-ui'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import AppShell from '@/components/layout/AppShell.vue'
 import { useUiStore } from '@/stores/ui'
 

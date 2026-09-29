@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { NButton, NEmpty, NIcon, NSpace, NTooltip, useMessage } from 'naive-ui'
 import { FolderOpen, FolderPlus, Times } from '@vicons/fa'
+import { NButton, NEmpty, NIcon, NSpace, NTooltip, useMessage } from 'naive-ui'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
+
 import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
 import { useProjectStore } from '@/stores/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
-import { useI18n } from 'vue-i18n'
 
 const recentStore = useRecentProjectsStore()
 const projectStore = useProjectStore()

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { watch } from 'vue'
-import { NEmpty, NIcon, NTabPane, NTabs } from 'naive-ui'
 import { Cog } from '@vicons/fa'
+import { NEmpty, NIcon, NTabPane, NTabs } from 'naive-ui'
 import { storeToRefs } from 'pinia'
+import { watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { DOCUMENTATION_TAB_KEY, isDocumentationTab } from '@/types/project'
-import { useI18n } from 'vue-i18n'
 
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()

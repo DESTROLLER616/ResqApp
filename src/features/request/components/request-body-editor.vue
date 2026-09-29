@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { NSelect, type SelectOption } from 'naive-ui'
-import { basicSetup } from 'codemirror'
-import { Compartment, type Extension } from '@codemirror/state'
-import { EditorView, keymap, placeholder, type ViewUpdate } from '@codemirror/view'
-import { json } from '@codemirror/lang-json'
+import { indentWithTab } from '@codemirror/commands'
 import { html } from '@codemirror/lang-html'
+import { json } from '@codemirror/lang-json'
 import { xml } from '@codemirror/lang-xml'
 import { linter, lintGutter } from '@codemirror/lint'
+import { Compartment, type Extension } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
-import { indentWithTab } from '@codemirror/commands'
+import { EditorView, keymap, placeholder, type ViewUpdate } from '@codemirror/view'
+import { basicSetup } from 'codemirror'
+import { NSelect, type SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { jsonBodyLinter, syntaxErrorLinter } from '@/features/request/utils/body-linter'
 import { useProjectStore } from '@/stores/project'
 import { useUiStore } from '@/stores/ui'
-import { LANGUAGE_BODY, type LanguageBody } from '@/types/language-body'
 import type { BodyMode, RequestBody } from '@/types/http'
-import { jsonBodyLinter, syntaxErrorLinter } from '@/features/request/utils/body-linter'
+import { LANGUAGE_BODY, type LanguageBody } from '@/types/language-body'
+
 import RequestFormDataEditor from './request-form-data-editor.vue'
 
 const LINT_DELAY_MS = 300

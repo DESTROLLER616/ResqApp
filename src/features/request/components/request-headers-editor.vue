@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
+import { Plus, TrashAlt } from '@vicons/fa'
+import { NButton, NCheckbox, NIcon, NInput, NTable, NTooltip } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+
 import { useProjectStore } from '@/stores/project'
 import type { HttpHeader } from '@/types/http'
-import { Plus, TrashAlt } from '@vicons/fa'
-import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   headers: HttpHeader[]

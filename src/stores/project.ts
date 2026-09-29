@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+
 import { i18n } from '@/i18n'
 import * as workspaceService from '@/services/workspace'
-import type { HttpMethod, RequestDraft } from '@/types/http'
-import { emptyRequestBody, normalizeRequestBody } from '@/utils/request-body'
-import { isDocumentationTab, type OpenedProject, type ProjectTreeNode } from '@/types/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useWorkspaceStore } from '@/stores/workspace'
+import type { HttpMethod, RequestDraft } from '@/types/http'
+import { isDocumentationTab, type OpenedProject, type ProjectTreeNode } from '@/types/project'
 import { entryName, parentOf } from '@/utils/project-tree'
+import { emptyRequestBody, normalizeRequestBody } from '@/utils/request-body'
 
 const SAVE_DEBOUNCE_MS = 300
 

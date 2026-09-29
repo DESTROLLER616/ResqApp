@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+
 import {
   DOCUMENTATION_TAB_KEY,
   isDocumentationTab,

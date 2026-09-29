@@ -1,6 +1,7 @@
-import pluginVue from 'eslint-plugin-vue'
-import { withVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
+import { vueTsConfigs,withVueTs } from '@vue/eslint-config-typescript'
 import eslintConfigPrettier from 'eslint-config-prettier'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import pluginVue from 'eslint-plugin-vue'
 
 export default withVueTs(
   {
@@ -12,9 +13,18 @@ export default withVueTs(
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      eqeqeq: ['error', 'always'],
+      'eqeqeq': ['error', 'always'],
       'no-bitwise': 'error',
       'no-empty': 'error',
+    },
+  },
+  {
+    plugins: {
+      'simple-import-sort': simpleImportSort,
+    },
+    rules: {
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
     },
   },
   eslintConfigPrettier,

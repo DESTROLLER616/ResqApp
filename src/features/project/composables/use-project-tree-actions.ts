@@ -1,8 +1,9 @@
-import { computed, h, ref } from 'vue'
-import { NIcon, useMessage } from 'naive-ui'
-import type { DropdownOption, SelectOption, TreeOption } from 'naive-ui'
 import { FileAlt, FolderPlus, PenAlt, TrashAlt } from '@vicons/fa'
+import type { DropdownOption, SelectOption, TreeOption } from 'naive-ui'
+import { NIcon, useMessage } from 'naive-ui'
+import { computed, h, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
 import { useProjectStore } from '@/stores/project'
 import { HTTP_METHODS, type HttpMethod } from '@/types/http'
 import type { ProjectEntryKind, ProjectTreeOption } from '@/types/project'

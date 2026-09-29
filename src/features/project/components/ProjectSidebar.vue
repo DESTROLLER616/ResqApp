@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Cog,FileAlt, FolderOpen, FolderPlus } from '@vicons/fa'
+import { Cog, FileAlt, FolderOpen, FolderPlus } from '@vicons/fa'
 import type { TreeOption } from 'naive-ui'
 import {
   NButton,

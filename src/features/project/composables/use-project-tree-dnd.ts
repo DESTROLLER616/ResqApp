@@ -1,6 +1,6 @@
 import type { TreeDragInfo, TreeDropInfo, TreeOption } from 'naive-ui'
 import { useMessage } from 'naive-ui'
-import { computed, type ComputedRef, type Ref,ref } from 'vue'
+import { computed, type ComputedRef, type Ref, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useProjectStore } from '@/stores/project'

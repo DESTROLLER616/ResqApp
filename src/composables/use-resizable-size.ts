@@ -1,4 +1,4 @@
-import { type Ref,ref } from 'vue'
+import { type Ref, ref } from 'vue'
 
 interface UseResizableSizeOptions {
   initial: number

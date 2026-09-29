@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
+
 import type { ResolvedTheme, ThemeMode } from '@/types/ui'
 
 export type { ResolvedTheme, ThemeMode }

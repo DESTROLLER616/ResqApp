@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { NInput, NModal, NSpace } from 'naive-ui'
-import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
 import { useI18n } from 'vue-i18n'
+
+import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
 
 const {
   createModalOpen,

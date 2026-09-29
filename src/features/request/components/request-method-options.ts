@@ -1,5 +1,6 @@
-import { h, type VNodeChild } from 'vue'
 import type { SelectOption } from 'naive-ui'
+import { h, type VNodeChild } from 'vue'
+
 import { HTTP_METHODS, type HttpMethod } from '@/types/http'
 
 export const METHOD_COLORS: Record<HttpMethod, string> = {

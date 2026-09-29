@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import 'md-editor-v3/lib/style.css'
+import '@/features/project/md-editor-setup'
+
+import { MdEditor } from 'md-editor-v3'
 import { NText } from 'naive-ui'
 import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { MdEditor } from 'md-editor-v3'
-import 'md-editor-v3/lib/style.css'
+
 import { useProjectStore } from '@/stores/project'
 import { useUiStore } from '@/stores/ui'
-import '@/features/project/md-editor-setup'
 
 const projectStore = useProjectStore()
 const { documentation } = storeToRefs(projectStore)

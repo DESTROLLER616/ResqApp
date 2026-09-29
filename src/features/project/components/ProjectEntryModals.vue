@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { NInput, NModal, NSelect, NSpace, NText } from 'naive-ui'
-import { useProjectTreeActions } from '@/features/project/composables/use-project-tree-actions'
 import { useI18n } from 'vue-i18n'
+
+import { useProjectTreeActions } from '@/features/project/composables/use-project-tree-actions'
 
 const {
   createModal,

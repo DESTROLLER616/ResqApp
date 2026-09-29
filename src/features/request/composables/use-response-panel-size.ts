@@ -1,4 +1,5 @@
 import { onMounted, onUnmounted, useTemplateRef, watch, type WatchSource } from 'vue'
+
 import { useResizableSize } from '@/composables/use-resizable-size'
 
 const RESPONSE_MIN = 120

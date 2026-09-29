@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { File, Image, Plus, TrashAlt } from '@vicons/fa'
 import {
   NButton,
   NCheckbox,
@@ -14,18 +14,19 @@ import {
   NTable,
   NTag,
   NTooltip,
-  useMessage,
   type SelectOption,
+  useMessage,
 } from 'naive-ui'
-import { File, Image, Plus, TrashAlt } from '@vicons/fa'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useProjectStore } from '@/stores/project'
+
 import {
   copyRequestAttachment,
   listRequestAttachments,
   pickFile,
   type ProjectAttachment,
 } from '@/services/attachments'
+import { useProjectStore } from '@/stores/project'
 import type { FormField, FormFieldKind, RequestBody } from '@/types/http'
 
 const props = defineProps<{

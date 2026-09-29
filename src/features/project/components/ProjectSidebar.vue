@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, h, ref } from 'vue'
+import { Cog, FileAlt, FolderOpen, FolderPlus } from '@vicons/fa'
+import type { TreeOption } from 'naive-ui'
 import {
   NButton,
   NDropdown,
@@ -7,14 +8,15 @@ import {
   NIcon,
   NInput,
   NSpace,
-  NTree,
-  NTooltip,
   NText,
+  NTooltip,
+  NTree,
   useMessage,
 } from 'naive-ui'
-import type { TreeOption } from 'naive-ui'
-import { FolderOpen, FolderPlus, FileAlt, Cog } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
+import { computed, h, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
 import ProjectEntryModals from '@/features/project/components/ProjectEntryModals.vue'
 import { useProjectTreeActions } from '@/features/project/composables/use-project-tree-actions'
@@ -25,7 +27,6 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import type { ProjectTreeOption } from '@/types/project'
 import { toErrorMessage } from '@/utils/error-message'
 import { relativePathFromRequestKey, requestTreeKey, toTreeOptions } from '@/utils/project-tree'
-import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 

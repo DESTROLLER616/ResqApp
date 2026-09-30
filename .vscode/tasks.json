@@ -1,20 +1,20 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Lint",
-            "type": "shell",
-            "command": "pnpm lint"
-        },
-        {
-            "label": "Format",
-            "type": "shell",
-            "command": "pnpm format"
-        },
-        {
-            "label": "Lint & format code",
-            "dependsOrder": "sequence",
-            "dependsOn": ["Lint", "Format"]
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "pnpm lint"
+    },
+    {
+      "label": "Format",
+      "type": "shell",
+      "command": "pnpm format"
+    },
+    {
+      "label": "Lint & format code",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Lint", "Format"]
+    }
+  ]
 }

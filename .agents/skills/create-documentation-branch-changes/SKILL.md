@@ -12,3 +12,7 @@ The output is all the text in a codeblock in markdown format to copy it. The lan
 # Branches
 
 You only check the changes of the current branch that is the user, don't check any other branch.
+
+# Exceptions
+
+If the current branch has no changes, inform that to the user and do not do anything else.

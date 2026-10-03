@@ -53,12 +53,7 @@ pub fn create_project(parent_dir: &Path, name: &str) -> Result<OpenedProject> {
     write_project_meta(&root, &meta)?;
 
     let root = canonicalize_existing(&root)?;
-    Ok(OpenedProject {
-        root_path: root.to_string_lossy().to_string(),
-        name: meta.name,
-        documentation: meta.documentation,
-        tree: scan_project_tree(&root)?,
-    })
+    opened_project(&root, &meta)
 }
 
 pub fn open_project(path: &Path) -> Result<OpenedProject> {
@@ -66,12 +61,20 @@ pub fn open_project(path: &Path) -> Result<OpenedProject> {
     if !root.is_dir() {
         return Err(AppError::message("project path must be a directory"));
     }
-    let meta = read_project_meta(&root)?;
+    let mut meta = read_project_meta(&root)?;
+    if meta.ensure_id() {
+        write_project_meta(&root, &meta)?;
+    }
+    opened_project(&root, &meta)
+}
+
+fn opened_project(root: &Path, meta: &ProjectMeta) -> Result<OpenedProject> {
     Ok(OpenedProject {
+        id: meta.id.clone(),
         root_path: root.to_string_lossy().to_string(),
-        name: meta.name,
-        documentation: meta.documentation,
-        tree: scan_project_tree(&root)?,
+        name: meta.name.clone(),
+        documentation: meta.documentation.clone(),
+        tree: scan_project_tree(root)?,
     })
 }
 

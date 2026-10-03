@@ -5,7 +5,6 @@ import {
   NCheckbox,
   NEmpty,
   NIcon,
-  NInput,
   NList,
   NListItem,
   NModal,
@@ -20,6 +19,7 @@ import {
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import VariableInput from '@/features/environments/components/VariableInput.vue'
 import {
   copyRequestAttachment,
   listRequestAttachments,
@@ -172,7 +172,7 @@ async function chooseDiskFile(field: FormField): Promise<void> {
       <tbody>
         <tr v-for="field in body.fields" :key="field.id">
           <td>
-            <n-input
+            <VariableInput
               :value="field.key"
               :placeholder="t('request.table.name')"
               size="small"
@@ -190,7 +190,7 @@ async function chooseDiskFile(field: FormField): Promise<void> {
             />
           </td>
           <td>
-            <n-input
+            <VariableInput
               v-if="field.kind === 'text'"
               :value="field.value"
               :placeholder="t('request.table.value')"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Cog, FileAlt, FolderOpen, FolderPlus } from '@vicons/fa'
+import { Cog, FileAlt, FolderOpen, FolderPlus, Key } from '@vicons/fa'
 import type { TreeOption } from 'naive-ui'
 import {
   NButton,
@@ -22,6 +22,7 @@ import ProjectEntryModals from '@/features/project/components/ProjectEntryModals
 import { useProjectTreeActions } from '@/features/project/composables/use-project-tree-actions'
 import { useProjectTreeDnd } from '@/features/project/composables/use-project-tree-dnd'
 import { useProjectTreeExpansion } from '@/features/project/composables/use-project-tree-expansion'
+import { useEnvironmentsStore } from '@/stores/environments'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { ProjectTreeOption } from '@/types/project'
@@ -67,7 +68,7 @@ const { openCreate, contextMenu, dropdownOptions, nodeProps, onDropdownSelect, c
   useProjectTreeActions()
 
 const selectedKeys = computed(() => {
-  if (activePanel.value === 'documentation') {
+  if (activePanel.value === 'documentation' || activePanel.value === 'environments') {
     return []
   }
   if (activeRequestPath.value) {
@@ -104,7 +105,14 @@ async function onSelect(keys: Array<string | number>) {
 
 async function openDocumentation(): Promise<void> {
   await projectStore.flushSave()
+  await useEnvironmentsStore().flush()
   workspaceStore.openDocumentation(t('project.documentation.title'))
+}
+
+async function openEnvironments(): Promise<void> {
+  await projectStore.flushSave()
+  await projectStore.flushDocumentation()
+  workspaceStore.openEnvironments(t('environments.title'))
 }
 </script>
 
@@ -141,6 +149,21 @@ async function openDocumentation(): Promise<void> {
             </n-button>
           </template>
           {{ t('project.actions.newRequest') }}
+        </n-tooltip>
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-button
+              size="tiny"
+              :quaternary="activePanel !== 'environments'"
+              :type="activePanel === 'environments' ? 'primary' : 'default'"
+              @click="openEnvironments"
+            >
+              <template #icon>
+                <n-icon :component="Key" />
+              </template>
+            </n-button>
+          </template>
+          {{ t('environments.title') }}
         </n-tooltip>
         <n-tooltip trigger="hover" placement="bottom">
           <template #trigger>

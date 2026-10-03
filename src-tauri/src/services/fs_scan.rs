@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 
+use crate::domain::environment::ENVIRONMENTS_FILE;
 use crate::domain::request::{HttpMethod, ProjectNode, RequestDraft};
 use crate::domain::workspace::PROJECT_MARKER_FILE;
 use crate::error::{AppError, Result};
@@ -54,7 +55,7 @@ fn scan_dir(dir: &Path, relative: &str) -> Result<Vec<ProjectNode>> {
             continue;
         }
 
-        if name == PROJECT_MARKER_FILE {
+        if name == PROJECT_MARKER_FILE || name == ENVIRONMENTS_FILE {
             continue;
         }
 

@@ -33,6 +33,12 @@ body {
   --app-sidebar-bg: #fafafa;
   --app-surface: #ffffff;
   --app-muted: #6b7280;
+  --var-active-bg: rgba(37, 99, 235, 0.18);
+  --var-active-fg: #1d4ed8;
+  --var-other-bg: rgba(217, 119, 6, 0.22);
+  --var-other-fg: #b45309;
+  --var-missing-bg: rgba(220, 38, 38, 0.18);
+  --var-missing-fg: #b91c1c;
 }
 
 html.dark {
@@ -40,6 +46,12 @@ html.dark {
   --app-sidebar-bg: #18181c;
   --app-surface: #101014;
   --app-muted: #a1a1aa;
+  --var-active-bg: rgba(59, 130, 246, 0.28);
+  --var-active-fg: #93c5fd;
+  --var-other-bg: rgba(245, 158, 11, 0.28);
+  --var-other-fg: #fbbf24;
+  --var-missing-bg: rgba(248, 113, 113, 0.28);
+  --var-missing-fg: #fca5a5;
   color-scheme: dark;
 }
 

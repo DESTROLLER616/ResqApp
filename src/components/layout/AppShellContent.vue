@@ -5,6 +5,8 @@ import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
 import { useAppMenu } from '@/composables/use-app-menu'
 import { useResizableSize } from '@/composables/use-resizable-size'
+import EnvironmentsPanel from '@/features/environments/components/EnvironmentsPanel.vue'
+import VaultPasswordModal from '@/features/environments/components/VaultPasswordModal.vue'
 import ProjectDocumentationEditor from '@/features/project/components/ProjectDocumentationEditor.vue'
 import ProjectLifecycleModals from '@/features/project/components/ProjectLifecycleModals.vue'
 import ProjectSidebar from '@/features/project/components/ProjectSidebar.vue'
@@ -105,6 +107,7 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
       <RequestTabs />
       <div class="app-shell__panel">
         <ProjectDocumentationEditor v-if="activePanel === 'documentation'" />
+        <EnvironmentsPanel v-else-if="activePanel === 'environments'" />
         <RequestPanel v-else />
       </div>
     </main>
@@ -121,6 +124,7 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
   </div>
 
   <ProjectLifecycleModals />
+  <VaultPasswordModal />
 </template>
 
 <style scoped src="@/styles/app-shell-content.css"></style>

@@ -3,7 +3,10 @@ import { computed, ref } from 'vue'
 
 import {
   DOCUMENTATION_TAB_KEY,
+  ENVIRONMENTS_TAB_KEY,
   isDocumentationTab,
+  isEnvironmentsTab,
+  isVirtualTab,
   type OpenRequestTab,
   type WorkspacePanel,
 } from '@/types/project'
@@ -16,9 +19,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     openTabs.value.find((tab) => tab.relativePath === activeRequestPath.value),
   )
 
-  const activePanel = computed<WorkspacePanel>(() =>
-    isDocumentationTab(activeRequestPath.value) ? 'documentation' : 'request',
-  )
+  const activePanel = computed<WorkspacePanel>(() => {
+    if (isDocumentationTab(activeRequestPath.value)) return 'documentation'
+    if (isEnvironmentsTab(activeRequestPath.value)) return 'environments'
+    return 'request'
+  })
 
   function openRequest(relativePath: string, name: string): void {
     const existing = openTabs.value.find((tab) => tab.relativePath === relativePath)
@@ -59,6 +64,16 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     activeRequestPath.value = DOCUMENTATION_TAB_KEY
   }
 
+  function openEnvironments(name: string): void {
+    const existing = openTabs.value.find((tab) => tab.relativePath === ENVIRONMENTS_TAB_KEY)
+    if (!existing) {
+      openTabs.value.push({ relativePath: ENVIRONMENTS_TAB_KEY, name })
+    } else {
+      existing.name = name
+    }
+    activeRequestPath.value = ENVIRONMENTS_TAB_KEY
+  }
+
   function renameTab(relativePath: string, name: string): void {
     const tab = openTabs.value.find((item) => item.relativePath === relativePath)
     if (tab) tab.name = name
@@ -67,12 +82,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   function closeMatching(pathPrefix: string): void {
     openTabs.value = openTabs.value.filter(
       (tab) =>
-        isDocumentationTab(tab.relativePath) ||
+        isVirtualTab(tab.relativePath) ||
         (tab.relativePath !== pathPrefix && !tab.relativePath.startsWith(`${pathPrefix}/`)),
     )
     if (
       activeRequestPath.value &&
-      !isDocumentationTab(activeRequestPath.value) &&
+      !isVirtualTab(activeRequestPath.value) &&
       (activeRequestPath.value === pathPrefix ||
         activeRequestPath.value.startsWith(`${pathPrefix}/`))
     ) {
@@ -84,7 +99,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (oldPath === newPath) return
 
     for (const tab of openTabs.value) {
-      if (isDocumentationTab(tab.relativePath)) continue
+      if (isVirtualTab(tab.relativePath)) continue
       if (tab.relativePath === oldPath) {
         tab.relativePath = newPath
       } else if (tab.relativePath.startsWith(`${oldPath}/`)) {
@@ -92,7 +107,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       }
     }
 
-    if (isDocumentationTab(activeRequestPath.value)) return
+    if (isVirtualTab(activeRequestPath.value)) return
 
     if (activeRequestPath.value === oldPath) {
       activeRequestPath.value = newPath
@@ -115,6 +130,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     closeRequest,
     setActiveRequest,
     openDocumentation,
+    openEnvironments,
     renameTab,
     closeMatching,
     remapPaths,

@@ -125,6 +125,45 @@
       "actions": "Actions"
     }
   },
+  "environments": {
+    "title": "Environments",
+    "add": "New environment",
+    "empty": "This project has no environments yet",
+    "name": "Environment name",
+    "defaultName": "Environment {n}",
+    "use": "Use",
+    "none": "No environment",
+    "delete": "Delete environment",
+    "deleteHint": "This will delete \"{name}\" and its variables. Secret values will no longer be used in this project.",
+    "addVariable": "Add variable",
+    "variableKey": "Name",
+    "variableValue": "Value",
+    "secret": "Secret",
+    "secretPlaceholder": "Secret value",
+    "revealSecret": "Show secret",
+    "hideSecret": "Hide secret",
+    "duplicateKey": "This name is already in the environment",
+    "insert": "Insert variable",
+    "unresolved": "Unresolved variables: {names}",
+    "highlight": {
+      "active": "Variable from the active environment",
+      "other": "Exists in another environment of this project",
+      "missing": "This variable does not exist in the project"
+    },
+    "vault": {
+      "createTitle": "Secrets password",
+      "unlockTitle": "Unlock secrets",
+      "create": "Create",
+      "unlock": "Unlock",
+      "createHint": "Secret values are stored encrypted on this device. If you forget the password, they cannot be recovered.",
+      "unlockHint": "Enter the password to read the secret values stored on this device.",
+      "password": "Password",
+      "confirm": "Confirm password",
+      "passwordRequired": "The password cannot be empty",
+      "passwordMismatch": "The passwords do not match",
+      "cancelled": "Unlock secrets to send this request"
+    }
+  },
   "errors": {
     "noProjectOpen": "No project open",
     "invalidSourcePath": "Invalid source path"

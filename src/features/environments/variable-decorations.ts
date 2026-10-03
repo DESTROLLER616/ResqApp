@@ -1,4 +1,4 @@
-import { type Extension,RangeSetBuilder } from '@codemirror/state'
+import { type Extension, RangeSetBuilder } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,

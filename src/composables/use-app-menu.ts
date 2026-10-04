@@ -1,7 +1,8 @@
-import { onMounted, onUnmounted, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
+import { storeToRefs } from 'pinia'
+import { onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import { useProjectLifecycle } from '@/features/project/composables/use-project-lifecycle'
 import { availableLocales, setLocale } from '@/i18n'
 import { installAppMenu } from '@/services/app-menu'

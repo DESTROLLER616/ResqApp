@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { File, Image, Plus, TrashAlt } from '@vicons/fa'
 import {
   NButton,
   NCheckbox,
   NEmpty,
   NIcon,
-  NInput,
   NList,
   NListItem,
   NModal,
@@ -14,18 +13,20 @@ import {
   NTable,
   NTag,
   NTooltip,
-  useMessage,
   type SelectOption,
+  useMessage,
 } from 'naive-ui'
-import { File, Image, Plus, TrashAlt } from '@vicons/fa'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useProjectStore } from '@/stores/project'
+
+import VariableInput from '@/features/environments/components/VariableInput.vue'
 import {
   copyRequestAttachment,
   listRequestAttachments,
   pickFile,
   type ProjectAttachment,
 } from '@/services/attachments'
+import { useProjectStore } from '@/stores/project'
 import type { FormField, FormFieldKind, RequestBody } from '@/types/http'
 
 const props = defineProps<{
@@ -171,7 +172,7 @@ async function chooseDiskFile(field: FormField): Promise<void> {
       <tbody>
         <tr v-for="field in body.fields" :key="field.id">
           <td>
-            <n-input
+            <VariableInput
               :value="field.key"
               :placeholder="t('request.table.name')"
               size="small"
@@ -189,7 +190,7 @@ async function chooseDiskFile(field: FormField): Promise<void> {
             />
           </td>
           <td>
-            <n-input
+            <VariableInput
               v-if="field.kind === 'text'"
               :value="field.value"
               :placeholder="t('request.table.value')"

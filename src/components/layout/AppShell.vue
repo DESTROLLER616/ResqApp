@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { NMessageProvider } from 'naive-ui'
+
 import AppShellContent from '@/components/layout/AppShellContent.vue'
 </script>
 

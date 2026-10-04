@@ -1,35 +1,43 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
-import { NButton, NEmpty, NInput, NSelect, NTabPane, NTabs, NText, NIcon, NTooltip } from 'naive-ui'
+import { Upload } from '@vicons/fa'
+import { NAlert, NButton, NEmpty, NIcon, NSelect, NTabPane, NTabs, NText, NTooltip } from 'naive-ui'
 import { storeToRefs } from 'pinia'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import ResizeHandle from '@/components/layout/ResizeHandle.vue'
+import VariableInput from '@/features/environments/components/VariableInput.vue'
+import { previewTemplate, variableSpans } from '@/features/environments/resolve'
+import { useEnvironmentsStore } from '@/stores/environments'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { type HttpMethod, type HttpResponse } from '@/types/http'
-import RequestBodyEditor from './request-body-editor.vue'
-import RequestDocumentationEditor from './RequestDocumentationEditor.vue'
-import RequestHeadersEditor from './request-headers-editor.vue'
-import RequestParamsEditor from './request-params-editor.vue'
-import ResponseBodyTab from './response-body-tab.vue'
-import makeRequest from '../make-request.ts'
-import ResponseHeadersTab from './response-headers-tab.vue'
 import formatBytes from '@/utils/format-numbers.ts'
-import { Upload } from '@vicons/fa'
-import { useI18n } from 'vue-i18n'
-import { methodOptions, renderMethodLabel } from './request-method-options'
-import { buildCompleteUrl, mergeParamsFromUrlSearch } from '../utils/request-url'
+
 import { useResponsePanelSize } from '../composables/use-response-panel-size'
+import makeRequest, { VaultUnlockCancelled } from '../make-request.ts'
+import { buildCompleteUrl, mergeParamsFromUrlSearch } from '../utils/request-url'
+import RequestBodyEditor from './request-body-editor.vue'
+import RequestHeadersEditor from './request-headers-editor.vue'
+import { methodOptions, renderMethodLabel } from './request-method-options'
 import { METHOD_COLORS } from './request-method-options'
+import RequestParamsEditor from './request-params-editor.vue'
+import RequestDocumentationEditor from './RequestDocumentationEditor.vue'
+import ResponseBodyTab from './response-body-tab.vue'
+import ResponseHeadersTab from './response-headers-tab.vue'
 
 const projectStore = useProjectStore()
 const workspaceStore = useWorkspaceStore()
+const environmentsStore = useEnvironmentsStore()
 const { activeDraft, hasProject } = storeToRefs(projectStore)
+const { environments, activeEnvironmentId, catalog } = storeToRefs(environmentsStore)
 const { activeRequestPath } = storeToRefs(workspaceStore)
 const { t } = useI18n()
 const { responseHeight, onResponseDrag } = useResponsePanelSize(activeDraft)
 
 const response = ref<HttpResponse | null>(null)
 const responseError = ref<string | null>(null)
+const unresolvedNames = ref<string[]>([])
 const isSending = ref(false)
 const requestTab = ref<'params' | 'headers' | 'body' | 'documentation'>('body')
 
@@ -48,12 +56,20 @@ async function sendRequest() {
   const projectRoot = projectStore.rootPath
   if (!draft || !projectRoot) return
   responseError.value = null
+  unresolvedNames.value = []
   isSending.value = true
   try {
-    response.value = await makeRequest(draft, projectRoot)
+    const result = await makeRequest(draft, projectRoot)
+    response.value = result.response
+    unresolvedNames.value = result.unresolved
   } catch (error) {
     response.value = null
-    responseError.value = error instanceof Error ? error.message : t('request.error.sendFailed')
+    responseError.value =
+      error instanceof VaultUnlockCancelled
+        ? t('environments.vault.cancelled')
+        : error instanceof Error
+          ? error.message
+          : t('request.error.sendFailed')
   } finally {
     isSending.value = false
   }
@@ -66,6 +82,32 @@ function syncUrlDraftFromStore(): void {
     return
   }
   urlDraft.value = buildCompleteUrl(draft.url, draft.params ?? [])
+}
+
+const environmentOptions = computed(() => [
+  { label: t('environments.none'), value: '' },
+  ...environments.value.map((environment) => ({
+    label: environment.name,
+    value: environment.id,
+  })),
+])
+
+const urlPreview = computed(() => {
+  if (
+    variableSpans(urlDraft.value, catalog.value.activeKeys, catalog.value.projectKeys).length === 0
+  ) {
+    return ''
+  }
+  const preview = previewTemplate(
+    urlDraft.value,
+    catalog.value.publicValues,
+    new Set(catalog.value.secretIds.keys()),
+  )
+  return preview === urlDraft.value ? '' : preview
+})
+
+function updateEnvironment(value: string): void {
+  environmentsStore.setActiveEnvironment(value || null)
 }
 
 function updateMethod(value: string): void {
@@ -136,6 +178,13 @@ watch(
         <div class="request-panel__bar">
           <div class="request-panel__bar-row">
             <n-select
+              class="request-panel__environment"
+              :value="activeEnvironmentId ?? ''"
+              :options="environmentOptions"
+              :consistent-menu-width="false"
+              @update:value="updateEnvironment"
+            />
+            <n-select
               class="request-panel__method"
               :value="activeDraft.method"
               :options="methodOptions"
@@ -143,7 +192,7 @@ watch(
               :render-label="renderMethodLabel"
               @update:value="updateMethod"
             />
-            <n-input
+            <VariableInput
               class="request-panel__url"
               :value="urlDraft"
               placeholder="https://api.example.com/…"
@@ -165,6 +214,9 @@ watch(
               {{ t('request.actions.send') }}
             </n-tooltip>
           </div>
+          <n-text v-if="urlPreview" depth="3" class="request-panel__url-preview">
+            {{ urlPreview }}
+          </n-text>
         </div>
 
         <div class="request-panel__name">
@@ -208,6 +260,14 @@ watch(
         :style="{ height: `${responseHeight}px`, flexBasis: `${responseHeight}px` }"
       >
         <div class="request-panel__response-title">{{ t('request.response') }}</div>
+        <n-alert
+          v-if="unresolvedNames.length > 0"
+          type="warning"
+          :show-icon="false"
+          class="request-panel__unresolved"
+        >
+          {{ t('environments.unresolved', { names: unresolvedNames.join(', ') }) }}
+        </n-alert>
         <div v-if="responseError" class="request-panel__error">
           {{ responseError }}
         </div>

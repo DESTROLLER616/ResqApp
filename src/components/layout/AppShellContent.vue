@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
+
+import ResizeHandle from '@/components/layout/ResizeHandle.vue'
+import { useAppMenu } from '@/composables/use-app-menu'
+import { useResizableSize } from '@/composables/use-resizable-size'
+import EnvironmentsPanel from '@/features/environments/components/EnvironmentsPanel.vue'
+import VaultPasswordModal from '@/features/environments/components/VaultPasswordModal.vue'
+import ProjectDocumentationEditor from '@/features/project/components/ProjectDocumentationEditor.vue'
 import ProjectLifecycleModals from '@/features/project/components/ProjectLifecycleModals.vue'
 import ProjectSidebar from '@/features/project/components/ProjectSidebar.vue'
 import RecentProjectsSidebar from '@/features/project/components/RecentProjectsSidebar.vue'
 import RequestTabs from '@/features/project/components/RequestTabs.vue'
-import ProjectDocumentationEditor from '@/features/project/components/ProjectDocumentationEditor.vue'
 import RequestPanel from '@/features/request/components/RequestPanel.vue'
-import ResizeHandle from '@/components/layout/ResizeHandle.vue'
-import { useAppMenu } from '@/composables/use-app-menu'
-import { useResizableSize } from '@/composables/use-resizable-size'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useUiStore } from '@/stores/ui'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -104,6 +107,7 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
       <RequestTabs />
       <div class="app-shell__panel">
         <ProjectDocumentationEditor v-if="activePanel === 'documentation'" />
+        <EnvironmentsPanel v-else-if="activePanel === 'environments'" />
         <RequestPanel v-else />
       </div>
     </main>
@@ -120,6 +124,7 @@ watch([isProjectSidebarVisible, isRecentSidebarVisible], () => {
   </div>
 
   <ProjectLifecycleModals />
+  <VaultPasswordModal />
 </template>
 
 <style scoped src="@/styles/app-shell-content.css"></style>

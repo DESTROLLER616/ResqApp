@@ -1,6 +1,7 @@
-import { ref } from 'vue'
 import { useMessage } from 'naive-ui'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
 import * as workspaceService from '@/services/workspace'
 import { useProjectStore } from '@/stores/project'
 import { useRecentProjectsStore } from '@/stores/recent-projects'

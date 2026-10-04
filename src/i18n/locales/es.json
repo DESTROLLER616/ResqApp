@@ -125,6 +125,45 @@
       "actions": "Acciones"
     }
   },
+  "environments": {
+    "title": "Entornos",
+    "add": "Nuevo entorno",
+    "empty": "Este proyecto todavía no tiene entornos",
+    "name": "Nombre del entorno",
+    "defaultName": "Entorno {n}",
+    "use": "Usar",
+    "none": "Sin entorno",
+    "delete": "Borrar entorno",
+    "deleteHint": "Se eliminará \"{name}\" y sus variables. Los valores secretos dejan de usarse en este proyecto.",
+    "addVariable": "Agregar variable",
+    "variableKey": "Nombre",
+    "variableValue": "Valor",
+    "secret": "Secreto",
+    "secretPlaceholder": "Valor secreto",
+    "revealSecret": "Mostrar secreto",
+    "hideSecret": "Ocultar secreto",
+    "duplicateKey": "Este nombre ya está en el entorno",
+    "insert": "Insertar variable",
+    "unresolved": "Variables sin resolver: {names}",
+    "highlight": {
+      "active": "Variable del entorno activo",
+      "other": "Existe en otro entorno del proyecto",
+      "missing": "Esta variable no existe en el proyecto"
+    },
+    "vault": {
+      "createTitle": "Contraseña de secretos",
+      "unlockTitle": "Desbloquear secretos",
+      "create": "Crear",
+      "unlock": "Desbloquear",
+      "createHint": "Los valores secretos se guardan cifrados en este dispositivo. Si olvidas la contraseña, no se pueden recuperar.",
+      "unlockHint": "Introduce la contraseña para leer los valores secretos de este dispositivo.",
+      "password": "Contraseña",
+      "confirm": "Confirmar contraseña",
+      "passwordRequired": "La contraseña no puede estar vacía",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "cancelled": "Hace falta desbloquear los secretos para enviar esta petición"
+    }
+  },
   "errors": {
     "noProjectOpen": "No hay ningún proyecto abierto",
     "invalidSourcePath": "Ruta de origen no válida"

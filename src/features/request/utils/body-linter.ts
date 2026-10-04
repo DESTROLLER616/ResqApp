@@ -1,5 +1,5 @@
-import { syntaxTree } from '@codemirror/language'
 import { jsonParseLinter } from '@codemirror/lang-json'
+import { syntaxTree } from '@codemirror/language'
 import type { Diagnostic } from '@codemirror/lint'
 import type { EditorView } from '@codemirror/view'
 

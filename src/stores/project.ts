@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+
 import { i18n } from '@/i18n'
 import * as workspaceService from '@/services/workspace'
-import type { HttpMethod, RequestDraft } from '@/types/http'
-import { emptyRequestBody, normalizeRequestBody } from '@/utils/request-body'
-import { isDocumentationTab, type OpenedProject, type ProjectTreeNode } from '@/types/project'
+import { useEnvironmentsStore } from '@/stores/environments'
 import { useRecentProjectsStore } from '@/stores/recent-projects'
 import { useWorkspaceStore } from '@/stores/workspace'
+import type { HttpMethod, RequestDraft } from '@/types/http'
+import { isVirtualTab, type OpenedProject, type ProjectTreeNode } from '@/types/project'
 import { entryName, parentOf } from '@/utils/project-tree'
+import { emptyRequestBody, normalizeRequestBody } from '@/utils/request-body'
 
 const SAVE_DEBOUNCE_MS = 300
 
@@ -36,6 +38,7 @@ function findRequestName(tree: ProjectTreeNode[], relativePath: string): string 
 
 export const useProjectStore = defineStore('project', () => {
   const rootPath = ref<string | null>(null)
+  const projectId = ref<string | null>(null)
   const name = ref<string | null>(null)
   const tree = ref<ProjectTreeNode[]>([])
   const documentation = ref('')
@@ -53,6 +56,7 @@ export const useProjectStore = defineStore('project', () => {
   function applyOpened(project: OpenedProject): void {
     const isSameProject = rootPath.value === project.rootPath
     rootPath.value = project.rootPath
+    projectId.value = project.id
     name.value = project.name
     tree.value = project.tree
     if (!isSameProject) {
@@ -71,11 +75,13 @@ export const useProjectStore = defineStore('project', () => {
     errorMessage.value = null
     try {
       await flushDocumentation()
+      await useEnvironmentsStore().flush()
       const project = await workspaceService.openProject(path)
       applyOpened(project)
       const workspaceStore = useWorkspaceStore()
       workspaceStore.resetForProject()
       activeDraft.value = null
+      await useEnvironmentsStore().bindProject(project.rootPath, project.id)
       await reloadRecents()
     } catch (e) {
       errorMessage.value = e instanceof Error ? e.message : String(e)
@@ -90,11 +96,13 @@ export const useProjectStore = defineStore('project', () => {
     errorMessage.value = null
     try {
       await flushDocumentation()
+      await useEnvironmentsStore().flush()
       const project = await workspaceService.createProject(parentDir, projectName)
       applyOpened(project)
       const workspaceStore = useWorkspaceStore()
       workspaceStore.resetForProject()
       activeDraft.value = null
+      await useEnvironmentsStore().bindProject(project.rootPath, project.id)
       await reloadRecents()
     } catch (e) {
       errorMessage.value = e instanceof Error ? e.message : String(e)
@@ -109,11 +117,13 @@ export const useProjectStore = defineStore('project', () => {
     errorMessage.value = null
     try {
       await flushDocumentation()
+      await useEnvironmentsStore().flush()
       const project = await workspaceService.initProject(path, projectName)
       applyOpened(project)
       const workspaceStore = useWorkspaceStore()
       workspaceStore.resetForProject()
       activeDraft.value = null
+      await useEnvironmentsStore().bindProject(project.rootPath, project.id)
       await reloadRecents()
     } catch (e) {
       errorMessage.value = e instanceof Error ? e.message : String(e)
@@ -125,8 +135,10 @@ export const useProjectStore = defineStore('project', () => {
 
   async function refresh(): Promise<void> {
     if (!rootPath.value) return
+    await useEnvironmentsStore().flush()
     const project = await workspaceService.refreshProject(rootPath.value)
     applyOpened(project)
+    await useEnvironmentsStore().bindProject(project.rootPath, project.id)
   }
 
   async function createFolder(parentRelative: string, folderName: string): Promise<void> {
@@ -223,7 +235,7 @@ export const useProjectStore = defineStore('project', () => {
     ) {
       activeDraft.value = null
       const activePath = workspaceStore.activeRequestPath
-      if (activePath && !isDocumentationTab(activePath)) {
+      if (activePath && !isVirtualTab(activePath)) {
         await selectRequest(activePath)
       }
     }
@@ -265,10 +277,14 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   async function selectRequest(relativePath: string): Promise<void> {
-    if (!rootPath.value || isDocumentationTab(relativePath)) return
+    if (!rootPath.value || isVirtualTab(relativePath)) return
     await flushSave()
-    if (useWorkspaceStore().activePanel === 'documentation') {
+    const panel = useWorkspaceStore().activePanel
+    if (panel === 'documentation') {
       await flushDocumentation()
+    }
+    if (panel === 'environments') {
+      await useEnvironmentsStore().flush()
     }
 
     const draft = ensureDraftShape(await workspaceService.readRequest(rootPath.value, relativePath))
@@ -389,6 +405,7 @@ export const useProjectStore = defineStore('project', () => {
 
   return {
     rootPath,
+    projectId,
     name,
     tree,
     documentation,

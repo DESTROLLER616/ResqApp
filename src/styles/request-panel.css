@@ -27,9 +27,28 @@
   width: 100%;
 }
 
+.request-panel__environment {
+  flex: 0 0 140px;
+  width: 140px;
+}
+
 .request-panel__method {
   flex: 0 0 118px;
   width: 118px;
+}
+
+.request-panel__url-preview {
+  display: block;
+  margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.request-panel__unresolved {
+  margin: 8px 16px 0;
 }
 
 .request-panel__url {

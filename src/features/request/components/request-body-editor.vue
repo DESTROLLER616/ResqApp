@@ -1,22 +1,28 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { NSelect, type SelectOption } from 'naive-ui'
-import { basicSetup } from 'codemirror'
-import { Compartment, type Extension } from '@codemirror/state'
-import { EditorView, keymap, placeholder, type ViewUpdate } from '@codemirror/view'
-import { json } from '@codemirror/lang-json'
+import { indentWithTab } from '@codemirror/commands'
 import { html } from '@codemirror/lang-html'
+import { json } from '@codemirror/lang-json'
 import { xml } from '@codemirror/lang-xml'
 import { linter, lintGutter } from '@codemirror/lint'
+import { Compartment, type Extension } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
-import { indentWithTab } from '@codemirror/commands'
+import { EditorView, keymap, placeholder, type ViewUpdate } from '@codemirror/view'
+import { Code } from '@vicons/fa'
+import { basicSetup } from 'codemirror'
+import { NButton, NDropdown, NIcon, NSelect, NTooltip, type SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { environmentVariableHighlight } from '@/features/environments/variable-decorations'
+import { jsonBodyLinter, syntaxErrorLinter } from '@/features/request/utils/body-linter'
+import { useEnvironmentsStore } from '@/stores/environments'
 import { useProjectStore } from '@/stores/project'
 import { useUiStore } from '@/stores/ui'
-import { LANGUAGE_BODY, type LanguageBody } from '@/types/language-body'
+import type { VariableStatus } from '@/types/environment'
 import type { BodyMode, RequestBody } from '@/types/http'
-import { jsonBodyLinter, syntaxErrorLinter } from '@/features/request/utils/body-linter'
+import { LANGUAGE_BODY, type LanguageBody } from '@/types/language-body'
+
 import RequestFormDataEditor from './request-form-data-editor.vue'
 
 const LINT_DELAY_MS = 300
@@ -28,8 +34,10 @@ const props = defineProps<{
 }>()
 
 const projectStore = useProjectStore()
+const environmentsStore = useEnvironmentsStore()
+const { catalog, activeEnvironment } = storeToRefs(environmentsStore)
 const { resolvedTheme } = storeToRefs(useUiStore())
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const languageOptions: SelectOption[] = LANGUAGE_BODY.map((language) => ({
   label: language,
@@ -45,6 +53,7 @@ const hostRef = ref<HTMLDivElement | null>(null)
 const languageCompartment = new Compartment()
 const lintCompartment = new Compartment()
 const themeCompartment = new Compartment()
+const highlightCompartment = new Compartment()
 let view: EditorView | null = null
 let resizeObserver: ResizeObserver | null = null
 
@@ -87,6 +96,49 @@ function editorSizeExtension(): Extension {
 
 function themeExtension(theme: 'light' | 'dark') {
   return theme === 'dark' ? oneDark : []
+}
+
+const highlightTitles = computed<Record<VariableStatus, string>>(() => ({
+  active: t('environments.highlight.active'),
+  other: t('environments.highlight.other'),
+  missing: t('environments.highlight.missing'),
+}))
+
+const highlightKey = computed(() => {
+  const active = [...catalog.value.activeKeys].sort().join('\0')
+  const project = [...catalog.value.projectKeys].sort().join('\0')
+  return `${locale.value}|${active}|${project}`
+})
+
+function highlightExtension(): Extension {
+  return environmentVariableHighlight(
+    catalog.value.activeKeys,
+    catalog.value.projectKeys,
+    highlightTitles.value,
+  )
+}
+
+const insertOptions = computed(() => {
+  const seen = new Set<string>()
+  const options: Array<{ label: string; key: string }> = []
+  for (const variable of activeEnvironment.value?.variables ?? []) {
+    const key = variable.key.trim()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    options.push({ label: key, key })
+  }
+  return options
+})
+
+function insertVariable(key: string | number): void {
+  if (!view) return
+  const token = `{{${String(key)}}}`
+  const { from, to } = view.state.selection.main
+  view.dispatch({
+    changes: { from, to, insert: token },
+    selection: { anchor: from + token.length },
+  })
+  view.focus()
 }
 
 function isLanguageBody(value: unknown): value is LanguageBody {
@@ -151,6 +203,7 @@ onMounted(async () => {
       lintCompartment.of(lintExtension(props.body.language)),
       lintGutter(),
       themeCompartment.of(themeExtension(resolvedTheme.value)),
+      highlightCompartment.of(highlightExtension()),
       EditorView.updateListener.of(onDocChanged),
       EditorView.lineWrapping,
     ],
@@ -192,6 +245,12 @@ watch(
   },
 )
 
+watch(highlightKey, () => {
+  view?.dispatch({
+    effects: highlightCompartment.reconfigure(highlightExtension()),
+  })
+})
+
 watch(resolvedTheme, (theme) => {
   view?.dispatch({
     effects: themeCompartment.reconfigure(themeExtension(theme)),
@@ -219,6 +278,25 @@ onUnmounted(() => {
         :aria-label="t('request.bodyMode')"
         @update:value="updateMode"
       />
+      <n-dropdown
+        v-if="body.mode === 'raw'"
+        trigger="click"
+        :options="insertOptions"
+        :disabled="insertOptions.length === 0"
+        @select="insertVariable"
+      >
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-button size="small" quaternary :disabled="insertOptions.length === 0">
+              <template #icon>
+                <n-icon :component="Code" />
+              </template>
+              {{ t('environments.insert') }}
+            </n-button>
+          </template>
+          {{ t('environments.insert') }}
+        </n-tooltip>
+      </n-dropdown>
       <n-select
         v-if="body.mode === 'raw'"
         class="body-editor__language"
@@ -284,5 +362,24 @@ onUnmounted(() => {
   overflow: auto;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px;
+}
+
+.body-editor__host :deep(.cm-env-var) {
+  border-radius: 3px;
+}
+
+.body-editor__host :deep(.cm-env-var--active) {
+  color: var(--var-active-fg);
+  background: var(--var-active-bg);
+}
+
+.body-editor__host :deep(.cm-env-var--other) {
+  color: var(--var-other-fg);
+  background: var(--var-other-bg);
+}
+
+.body-editor__host :deep(.cm-env-var--missing) {
+  color: var(--var-missing-fg);
+  background: var(--var-missing-bg);
 }
 </style>

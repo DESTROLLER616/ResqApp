@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+
 import * as workspaceService from '@/services/workspace'
-import type { RecentProject } from '@/types/project'
 import { useProjectStore } from '@/stores/project'
+import type { RecentProject } from '@/types/project'
 
 export const useRecentProjectsStore = defineStore('recent-projects', () => {
   const recentProjects = ref<RecentProject[]>([])

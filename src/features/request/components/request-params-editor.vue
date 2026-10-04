@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { NButton, NCheckbox, NInput, NTable, NIcon, NTooltip } from 'naive-ui'
+import { Plus, TrashAlt } from '@vicons/fa'
+import { NButton, NCheckbox, NIcon, NTable, NTooltip } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+
+import VariableInput from '@/features/environments/components/VariableInput.vue'
 import { useProjectStore } from '@/stores/project'
 import type { HttpParam } from '@/types/http'
-import { Plus, TrashAlt } from '@vicons/fa'
-import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   params: HttpParam[]
@@ -55,7 +57,7 @@ function deleteParams(id: string): void {
       <tbody>
         <tr v-for="param in params" :key="param.id">
           <td>
-            <n-input
+            <VariableInput
               :value="param.key"
               :placeholder="t('request.table.name')"
               size="small"
@@ -63,7 +65,7 @@ function deleteParams(id: string): void {
             />
           </td>
           <td>
-            <n-input
+            <VariableInput
               :value="param.value"
               :placeholder="t('request.table.value')"
               size="small"

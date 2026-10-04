@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { NCode, NEmpty } from 'naive-ui'
 import hljs from 'highlight.js/lib/core'
 import json from 'highlight.js/lib/languages/json'
 import xml from 'highlight.js/lib/languages/xml'
-import { detectBodyLanguage, formatResponseBody } from '@/utils/select-body-language'
+import { NCode, NEmpty } from 'naive-ui'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { detectBodyLanguage, formatResponseBody } from '@/utils/select-body-language'
 
 const { t } = useI18n()
 

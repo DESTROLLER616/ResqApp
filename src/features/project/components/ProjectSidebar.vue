@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, h, ref } from 'vue'
+import { Cog, FileAlt, FolderOpen, FolderPlus, Key } from '@vicons/fa'
+import type { TreeOption } from 'naive-ui'
 import {
   NButton,
   NDropdown,
@@ -7,25 +8,26 @@ import {
   NIcon,
   NInput,
   NSpace,
-  NTree,
-  NTooltip,
   NText,
+  NTooltip,
+  NTree,
   useMessage,
 } from 'naive-ui'
-import type { TreeOption } from 'naive-ui'
-import { FolderOpen, FolderPlus, FileAlt, Cog } from '@vicons/fa'
 import { storeToRefs } from 'pinia'
+import { computed, h, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import HttpMethodTag from '@/components/ui/HttpMethodTag.vue'
 import ProjectEntryModals from '@/features/project/components/ProjectEntryModals.vue'
 import { useProjectTreeActions } from '@/features/project/composables/use-project-tree-actions'
 import { useProjectTreeDnd } from '@/features/project/composables/use-project-tree-dnd'
 import { useProjectTreeExpansion } from '@/features/project/composables/use-project-tree-expansion'
+import { useEnvironmentsStore } from '@/stores/environments'
 import { useProjectStore } from '@/stores/project'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { ProjectTreeOption } from '@/types/project'
 import { toErrorMessage } from '@/utils/error-message'
 import { relativePathFromRequestKey, requestTreeKey, toTreeOptions } from '@/utils/project-tree'
-import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
@@ -66,7 +68,7 @@ const { openCreate, contextMenu, dropdownOptions, nodeProps, onDropdownSelect, c
   useProjectTreeActions()
 
 const selectedKeys = computed(() => {
-  if (activePanel.value === 'documentation') {
+  if (activePanel.value === 'documentation' || activePanel.value === 'environments') {
     return []
   }
   if (activeRequestPath.value) {
@@ -103,7 +105,14 @@ async function onSelect(keys: Array<string | number>) {
 
 async function openDocumentation(): Promise<void> {
   await projectStore.flushSave()
+  await useEnvironmentsStore().flush()
   workspaceStore.openDocumentation(t('project.documentation.title'))
+}
+
+async function openEnvironments(): Promise<void> {
+  await projectStore.flushSave()
+  await projectStore.flushDocumentation()
+  workspaceStore.openEnvironments(t('environments.title'))
 }
 </script>
 
@@ -140,6 +149,21 @@ async function openDocumentation(): Promise<void> {
             </n-button>
           </template>
           {{ t('project.actions.newRequest') }}
+        </n-tooltip>
+        <n-tooltip trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-button
+              size="tiny"
+              :quaternary="activePanel !== 'environments'"
+              :type="activePanel === 'environments' ? 'primary' : 'default'"
+              @click="openEnvironments"
+            >
+              <template #icon>
+                <n-icon :component="Key" />
+              </template>
+            </n-button>
+          </template>
+          {{ t('environments.title') }}
         </n-tooltip>
         <n-tooltip trigger="hover" placement="bottom">
           <template #trigger>

@@ -4,7 +4,7 @@ Thank you for helping keep ResqApp and its users safe. Please report security is
 
 ## Supported versions
 
-ResqApp is in early development (0.3.0). We only accept reports against the latest `main` branch (and the latest published release, when one exists).
+ResqApp is in early development (0.5.0). We only accept reports against the latest `main` branch (and the latest published release, when one exists).
 
 | Version                           | Supported |
 | --------------------------------- | --------- |
